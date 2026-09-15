@@ -36,7 +36,8 @@ jobs:
       - name: Test viewer
         run: npm test --prefix .github/viewer
       - name: Set Pages base path
-        run: sed -i "s#base: '/pptx-web/'#base: '/pptx/viewer/'#" .github/viewer/vite.config.js
+        run: |
+          sed -i "s#base: '/pptx-web/'#base: '/pptx/viewer/'#" .github/viewer/vite.config.js
       - name: Apply viewer overrides
         run: |
           cat .github/viewer-overrides.css >> .github/viewer/src/styles.css
