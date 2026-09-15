@@ -77,6 +77,7 @@ if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
 }
 
 let fullscreenZoom;
+let fullscreenFitMode;
 let boundViewer = null;
 
 const syncFullscreenSlide = () => {
@@ -98,16 +99,17 @@ document.addEventListener('fullscreenchange', () => {
   bindViewerEvents();
   if (document.fullscreenElement === elements.stage) {
     fullscreenZoom = viewer.zoomPercent;
+    fullscreenFitMode = viewer.fitMode;
     const frameWidth = Math.min(elements.stage.clientWidth, elements.stage.clientHeight * (16 / 9));
     const frameHeight = frameWidth * (9 / 16);
-    const fitScale = elements.viewerContainer.clientWidth / viewer.slideWidth;
     const slideScale = Math.min(frameWidth / viewer.slideWidth, frameHeight / viewer.slideHeight);
-    void viewer.setZoom((slideScale / fitScale) * 100);
+    void viewer.setFitMode('none').then(() => viewer.setZoom(slideScale * 100));
     requestAnimationFrame(syncFullscreenSlide);
   } else if (fullscreenZoom !== undefined) {
     document.querySelectorAll('.pptx-fullscreen-slide').forEach((item) => item.classList.remove('pptx-fullscreen-slide'));
-    void viewer.setZoom(fullscreenZoom);
+    void viewer.setFitMode(fullscreenFitMode ?? 'contain').then(() => viewer.setZoom(fullscreenZoom));
     fullscreenZoom = undefined;
+    fullscreenFitMode = undefined;
   }
 });
 
