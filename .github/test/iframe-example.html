@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PPTX embed test</title>
+    <style>
+        /* Jungle theme */
+        :root {
+            --pptx-primary: #6b8e23;
+            --pptx-primary-strong: #4f6f1b;
+            --pptx-primary-ink: #f7f4e9;
+            --pptx-primary-wash: rgb(107 142 35 / 18%);
+            --pptx-text-color: #f2f4e8;
+            --pptx-text-soft: #c5d2b4;
+            --pptx-text-muted: #92a684;
+            --pptx-logo-color: #8fbc5a;
+            --pptx-font-family: Georgia, "Times New Roman", serif;
+            --pptx-mono-font-family: "Courier New", monospace;
+            --pptx-font-size-body: 1rem;
+            --pptx-font-size-meta: 0.82rem;
+            --pptx-font-size-control: 0.72rem;
+            --pptx-font-size-heading: 1rem;
+            --pptx-font-size-brand: 1rem;
+            --pptx-surface-deep: #172218;
+            --pptx-background: #203126;
+            --pptx-surface: #2b4030;
+            --pptx-surface-raised: #38543a;
+            --pptx-surface-hover: #466744;
+            --pptx-border: #607b50;
+            --pptx-border-soft: #405b3d;
+            --pptx-topbar-background: rgb(26 45 29 / 94%);
+            --pptx-stage-background: #203126;
+            --pptx-sidebar-background: #2b4030;
+            --pptx-dialog-background: #2b4030;
+            --pptx-dialog-shadow: 0 24px 70px rgb(20 39 23 / 45%);
+            --pptx-shadow: 0 24px 70px rgb(20 39 23 / 45%);
+            --pptx-danger: #e6a08b;
+            --pptx-fullscreen-background: #111a12;
+            --pptx-slide-background: #f7f4e9;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            font-family: system-ui, sans-serif;
+        }
+
+        .pptx-embed {
+            display: block;
+            height: min(70vh, 675px);
+            margin: 0 auto;
+            border: 0;
+            border-radius: 20px;
+            box-shadow: 0 1rem 3rem rgb(15 23 42 / 18%);
+        }
+    </style>
+</head>
+<body>
+<iframe
+        class="pptx-embed"
+        src="http://localhost:5173/pptx-web/?url=http%3A%2F%2Flocalhost%3A8000%2Fpowerpoints%2Ftest.pptx&amp;embed=1&amp;sidebar=0"
+        allow="fullscreen"
+        allowfullscreen
+        width="80%"
+        title="Test PowerPoint">
+</iframe>
+<script src="pptx-embed.min.js"></script>
+</body>
+</html>
