@@ -1,0 +1,56 @@
+name: Compress PowerPoints
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install image optimizer
+        run: python -m pip install --quiet Pillow
+
+      - name: Prepare compressed branch
+        run: |
+          git fetch origin public || true
+          if git show-ref --verify --quiet refs/remotes/origin/public; then
+            git worktree add /tmp/compressed origin/public
+          else
+            mkdir -p /tmp/compressed
+            git -C /tmp/compressed init
+            git -C /tmp/compressed checkout -b public
+            git -C /tmp/compressed remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+          fi
+
+      - name: Compress newly added presentations
+        run: |
+          python .github/tools/compress_powerpoints.py \
+            --source powerpoints \
+            --destination /tmp/compressed/powerpoints
+
+      - name: Publish compressed branch
+        run: |
+          git -C /tmp/compressed config user.name "github-actions[bot]"
+          git -C /tmp/compressed config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/compressed add powerpoints
+          if git -C /tmp/compressed diff --cached --quiet; then
+            echo "No new presentations to publish."
+            exit 0
+          fi
+          git -C /tmp/compressed commit -m "Compress newly added PowerPoints"
+          git -C /tmp/compressed push origin public
