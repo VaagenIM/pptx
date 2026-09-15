@@ -1,24 +1,10 @@
 # pptx
 
-Public-facing PowerPoint files.
+Served at <https://pptx.iktim.no>.
 
-## Browse the files
-
-The repository has a GitHub Pages site at <https://pptx.iktim.no/>. It indexes the
-entire `main` branch and provides search, folder navigation, PowerPoint filtering, downloads,
-and buttons for copying file paths or raw URLs.
-
-The site is deployed automatically by `workflows/pages.yml` after pushes to `main`.
-In repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**
-if Pages has not been enabled yet.
-
-PowerPoint files can be opened in the self-hosted browser viewer from the **View online**
-shortcut. The viewer is provided by the pinned `viewer` submodule and is built into the
-Pages artifact at `/viewer/`; files are rendered in the browser and are not uploaded.
-Generated embed links use `embed=1&sidebar=0`; the viewer also accepts `url=` for a
-presentation source and `sidebar=0` (or `false`/`hidden`) to start with thumbnails collapsed.
+The site provides browsable PowerPoint files and embeddable presentations for use in other projects.
 
 ## Credits
 
-The embedded browser viewer is provided by
+The browser viewer is powered by
 [costinEEST/pptx-web](https://github.com/costinEEST/pptx-web), under its MIT license.
