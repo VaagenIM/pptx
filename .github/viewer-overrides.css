@@ -1,0 +1,5 @@
+/* Keep file-opening controls on the welcome screen, but remove them in embedded/deck views. */
+.pptx-embedded .topbar-actions,
+.app:not(.is-empty) .topbar-actions {
+  display: none;
+}

@@ -79,6 +79,11 @@
     .meta { color: var(--muted); font-size: .9rem; }
     .details { margin-top: 1rem; padding: 1rem; }
     .shortcuts { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+    .text-action { border: 0; color: var(--accent); padding: .2rem; text-decoration: underline; }
+    dialog { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); max-width: min(680px, calc(100% - 2rem)); padding: 1.25rem; width: 100%; }
+    dialog::backdrop { backdrop-filter: blur(5px); background: rgb(0 0 0 / 35%); }
+    dialog textarea { background: var(--code); border: 1px solid var(--border); border-radius: 6px; color: var(--text); display: block; font: .85rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin: .75rem 0; min-height: 7rem; padding: .6rem; resize: vertical; width: 100%; }
+    .modal-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
     code { background: var(--code); border-radius: 4px; padding: .15rem .3rem; }
     footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; }
     body.embed-mode main { max-width: 900px; padding: 1rem; }
@@ -107,6 +112,17 @@
     <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
     <section id="files" class="file-list" aria-live="polite"></section>
     <section id="details" class="details" hidden></section>
+    <dialog id="copy-modal" aria-labelledby="copy-modal-title">
+      <h2 id="copy-modal-title">Copy file</h2>
+      <p id="copy-modal-path" class="meta"></p>
+      <label for="copy-preview">Embed code preview</label>
+      <textarea id="copy-preview" readonly></textarea>
+      <div class="modal-actions">
+        <button id="copy-url" type="button">Copy URL</button>
+        <button id="copy-embed-code" type="button">Copy embed code</button>
+        <button id="close-copy-modal" type="button">Close</button>
+      </div>
+    </dialog>
     <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.</footer>
   </main>
   <script>
@@ -120,6 +136,13 @@
       const state = { entries: [], path: "", query: "", type: "all" };
       const $ = (id) => document.getElementById(id);
 
+      function viewerUrl(rawUrl) {
+        const url = new URL("viewer/", document.baseURI);
+        url.searchParams.set("url", rawUrl);
+        url.searchParams.set("embed", "1");
+        return url.href;
+      }
+
       function setStatus(message, error = false) {
         $("status").textContent = message;
         $("status").className = error ? "status error" : "status";
@@ -131,10 +154,13 @@
       }
 
       function isPublicEntry(entry) {
-        const name = entry.path.split("/").pop().toLowerCase();
-        return entry.path !== "docs" && entry.path !== ".github" &&
-          name !== "readme.md" && name !== ".gitignore" &&
-          !entry.path.startsWith("docs/") && !entry.path.startsWith(".github/");
+        const path = entry.path.toLowerCase();
+        const name = path.split("/").pop();
+        const extension = name.includes(".") ? name.split(".").pop() : "";
+        return path !== "docs" && path !== ".github" && path !== "viewer" &&
+          name !== "readme.md" && name !== ".gitignore" && name !== ".gitmodules" &&
+          extension !== "css" && extension !== "js" &&
+          !path.startsWith("docs/") && !path.startsWith(".github/") && !path.startsWith("viewer/");
       }
 
       function visibleEntries() {
@@ -197,6 +223,24 @@
         }).catch(() => setStatus("Unable to copy to the clipboard.", true));
       }
 
+      function openCopyModal(entry) {
+        const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+        const fileUrl = entry.type === "tree"
+          ? githubBase + entry.path.split("/").map(encodeURIComponent).join("/")
+          : rawUrl;
+        const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
+        const embedCode = isPowerPoint
+          ? `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" frameborder="0" title="${entry.name}"></iframe>`
+          : "";
+        $("copy-modal-path").textContent = entry.path;
+        $("copy-preview").value = embedCode || fileUrl;
+        $("copy-preview").previousElementSibling.textContent = embedCode ? "Embed code preview" : "URL preview";
+        $("copy-url").onclick = () => copy(fileUrl, $("copy-url"));
+        $("copy-embed-code").hidden = !isPowerPoint;
+        $("copy-embed-code").onclick = () => copy(embedCode, $("copy-embed-code"));
+        $("copy-modal").showModal();
+      }
+
       function renderDetails(entry) {
         const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
         const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
@@ -209,13 +253,13 @@
         copyUrl.textContent = "Copy raw URL";
         copyUrl.onclick = () => copy(rawUrl, copyUrl);
         const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
-        let officeUrl;
+        let presentationUrl;
         if (isPowerPoint) {
-          officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+          presentationUrl = viewerUrl(rawUrl);
           const copyEmbed = document.createElement("button");
           copyEmbed.textContent = "Copy embed code";
           copyEmbed.style.marginLeft = ".5rem";
-          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${officeUrl}" frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
+          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${presentationUrl}" frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
           $("details").append(copyEmbed);
         }
         const open = document.createElement("a");
@@ -227,7 +271,7 @@
         $("details").append(copyPath, " ", copyUrl, " ", open);
         if (isPowerPoint) {
           const viewOnline = document.createElement("a");
-          viewOnline.href = officeUrl;
+          viewOnline.href = presentationUrl;
           viewOnline.target = "_blank";
           viewOnline.rel = "noopener";
           viewOnline.textContent = "View online";
@@ -260,10 +304,11 @@
           meta.textContent = formatSize(entry.size);
           const shortcuts = document.createElement("div");
           shortcuts.className = "shortcuts";
-          const copyPath = document.createElement("button");
-          copyPath.type = "button";
+          const copyPath = document.createElement("a");
+          copyPath.href = "#";
           copyPath.textContent = "Copy";
-          copyPath.onclick = () => copy(entry.path, copyPath);
+          copyPath.className = "text-action";
+          copyPath.onclick = (event) => { event.preventDefault(); openCopyModal(entry); };
           shortcuts.append(copyPath);
           if (entry.type !== "tree") {
             const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
@@ -274,7 +319,7 @@
             shortcuts.append(action);
             if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
               const viewOnline = document.createElement("a");
-              viewOnline.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+              viewOnline.href = viewerUrl(rawUrl);
               viewOnline.target = "_blank";
               viewOnline.rel = "noopener";
               viewOnline.textContent = "View online";
@@ -309,6 +354,7 @@
       $("search").oninput = (event) => { state.query = event.target.value; render(); };
       $("type").onchange = (event) => { state.type = event.target.value; render(); };
       $("refresh").onclick = load;
+      $("close-copy-modal").onclick = () => $("copy-modal").close();
       if (new URLSearchParams(window.location.search).get("embed") === "1") document.body.classList.add("embed-mode");
       load();
     })();

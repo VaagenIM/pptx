@@ -23,12 +23,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: .github/viewer/package-lock.json
+      - name: Install viewer dependencies
+        run: npm ci --prefix .github/viewer
+      - name: Test viewer
+        run: npm test --prefix .github/viewer
+      - name: Set Pages base path
+        run: sed -i "s#base: '/pptx-web/'#base: '/pptx/viewer/'#" .github/viewer/vite.config.js
+      - name: Apply viewer overrides
+        run: |
+          cat .github/viewer-overrides.css >> .github/viewer/src/styles.css
+          cat .github/viewer-overrides.js >> .github/viewer/src/main.js
+      - name: Build viewer
+        run: npm run build --prefix .github/viewer -- --base=/pptx/viewer/
+      - name: Add viewer to Pages artifact
+        run: |
+          rm -rf .github/docs/viewer
+          mkdir -p .github/docs/viewer
+          cp -R .github/viewer/dist/. .github/docs/viewer/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: .github/docs
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
