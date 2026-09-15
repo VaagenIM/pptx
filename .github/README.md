@@ -15,3 +15,8 @@ if Pages has not been enabled yet.
 PowerPoint files can be opened in the self-hosted browser viewer from the **View online**
 shortcut. The viewer is provided by the pinned `viewer` submodule and is built into the
 Pages artifact at `/pptx/viewer/`; files are rendered in the browser and are not uploaded.
+
+## Credits
+
+The embedded browser viewer is provided by
+[costinEEST/pptx-web](https://github.com/costinEEST/pptx-web), under its MIT license.

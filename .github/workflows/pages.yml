@@ -49,6 +49,8 @@ jobs:
           rm -rf .github/docs/viewer
           mkdir -p .github/docs/viewer
           cp -R .github/viewer/dist/. .github/docs/viewer/
+      - name: Configure custom domain
+        run: echo "pptx.iktim.no" > .github/docs/CNAME
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact

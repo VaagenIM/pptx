@@ -78,7 +78,8 @@
     .icon { display: inline-block; width: 1.5rem; }
     .meta { color: var(--muted); font-size: .9rem; }
     .details { margin-top: 1rem; padding: 1rem; }
-    .shortcuts { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+    .shortcuts { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+    .shortcuts > a, .shortcuts > button { align-items: center; display: inline-flex; min-height: 2.25rem; padding: .35rem .6rem; }
     .text-action { border: 0; color: var(--accent); padding: .2rem; text-decoration: underline; }
     dialog { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); max-width: min(680px, calc(100% - 2rem)); padding: 1.25rem; width: 100%; }
     dialog::backdrop { backdrop-filter: blur(5px); background: rgb(0 0 0 / 35%); }
@@ -123,7 +124,9 @@
         <button id="close-copy-modal" type="button">Close</button>
       </div>
     </dialog>
-    <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.</footer>
+    <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.
+      Viewer powered by <a href="https://github.com/costinEEST/pptx-web" target="_blank" rel="noopener">pptx-web</a>.
+    </footer>
   </main>
   <script>
     (() => {
@@ -133,11 +136,12 @@
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
       const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
       const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
+      const viewerBase = "https://pptx.iktim.no/viewer/";
       const state = { entries: [], path: "", query: "", type: "all" };
       const $ = (id) => document.getElementById(id);
 
       function viewerUrl(rawUrl) {
-        const url = new URL("viewer/", document.baseURI);
+        const url = new URL(viewerBase);
         url.searchParams.set("url", rawUrl);
         url.searchParams.set("embed", "1");
         return url.href;
@@ -216,6 +220,10 @@
       }
 
       function copy(text, button) {
+        if (!button.dataset.copyWidth) {
+          button.dataset.copyWidth = `${button.getBoundingClientRect().width}px`;
+          button.style.minWidth = button.dataset.copyWidth;
+        }
         navigator.clipboard.writeText(text).then(() => {
           const original = button.textContent;
           button.textContent = "Copied";
@@ -230,7 +238,7 @@
           : rawUrl;
         const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
         const embedCode = isPowerPoint
-          ? `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" frameborder="0" title="${entry.name}"></iframe>`
+          ? `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`
           : "";
         $("copy-modal-path").textContent = entry.path;
         $("copy-preview").value = embedCode || fileUrl;
@@ -250,7 +258,7 @@
         copyPath.textContent = "Copy path";
         copyPath.onclick = () => copy(entry.path, copyPath);
         const copyUrl = document.createElement("button");
-        copyUrl.textContent = "Copy raw URL";
+        copyUrl.textContent = "Copy File URL";
         copyUrl.onclick = () => copy(rawUrl, copyUrl);
         const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
         let presentationUrl;
@@ -259,7 +267,7 @@
           const copyEmbed = document.createElement("button");
           copyEmbed.textContent = "Copy embed code";
           copyEmbed.style.marginLeft = ".5rem";
-          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${presentationUrl}" frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
+          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${presentationUrl}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
           $("details").append(copyEmbed);
         }
         const open = document.createElement("a");
@@ -355,6 +363,9 @@
       $("type").onchange = (event) => { state.type = event.target.value; render(); };
       $("refresh").onclick = load;
       $("close-copy-modal").onclick = () => $("copy-modal").close();
+      $("copy-modal").onclick = (event) => {
+        if (event.target === $("copy-modal")) $("copy-modal").close();
+      };
       if (new URLSearchParams(window.location.search).get("embed") === "1") document.body.classList.add("embed-mode");
       load();
     })();
