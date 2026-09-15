@@ -62,16 +62,15 @@ syncDownloadButton();
 
 if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
   const collapseSidebar = () => {
-    if (
-      !elements.app.classList.contains('is-empty') &&
-      !elements.app.classList.contains('sidebar-closed')
-    ) {
-      elements.app.classList.add('sidebar-closed');
-    }
+    if (elements.app.classList.contains('is-empty')) return;
+    elements.app.classList.add('sidebar-closed');
+    elements.sidebarToggle.setAttribute('aria-expanded', 'false');
+    elements.sidebarToggle.setAttribute('aria-label', 'Show slide thumbnails');
+    elements.sidebarToggleTooltip.textContent = 'Show slide thumbnails';
+    sidebarObserver.disconnect();
   };
   const sidebarObserver = new MutationObserver(collapseSidebar);
   sidebarObserver.observe(elements.app, { attributes: true, attributeFilter: ['class'] });
-  sidebarObserver.observe(elements.sidebarToggle, { attributes: true, attributeFilter: ['disabled'] });
   collapseSidebar();
 }
 
