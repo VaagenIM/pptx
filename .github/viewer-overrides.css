@@ -12,3 +12,19 @@
   inline-size: 100%;
   max-inline-size: none;
 }
+
+.stage:fullscreen .viewer-container > [data-slide-index] {
+  display: none !important;
+}
+
+.stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide {
+  display: block !important;
+  inline-size: 100vw !important;
+  block-size: 100vh !important;
+  margin: 0 !important;
+}
+
+.stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide > div {
+  inline-size: 100vw !important;
+  block-size: 100vh !important;
+}

@@ -76,16 +76,40 @@ if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
 }
 
 let fullscreenZoom;
+let boundViewer = null;
+
+const syncFullscreenSlide = () => {
+  if (!viewer || document.fullscreenElement !== elements.stage) return;
+  const currentIndex = String(viewer.currentSlideIndex);
+  document.querySelectorAll('.viewer-container > [data-slide-index]').forEach((item) => {
+    item.classList.toggle('pptx-fullscreen-slide', item.dataset.slideIndex === currentIndex);
+  });
+};
+
+const bindViewerEvents = () => {
+  if (!viewer || boundViewer === viewer) return;
+  boundViewer = viewer;
+  viewer.addEventListener('slidechange', syncFullscreenSlide);
+};
 
 document.addEventListener('fullscreenchange', () => {
   if (!viewer) return;
+  bindViewerEvents();
   if (document.fullscreenElement === elements.stage) {
     fullscreenZoom = viewer.zoomPercent;
     const fitScale = elements.viewerContainer.clientWidth / viewer.slideWidth;
     const heightScale = elements.stage.clientHeight / viewer.slideHeight;
     void viewer.setZoom((heightScale / fitScale) * 100);
+    requestAnimationFrame(syncFullscreenSlide);
   } else if (fullscreenZoom !== undefined) {
+    document.querySelectorAll('.pptx-fullscreen-slide').forEach((item) => item.classList.remove('pptx-fullscreen-slide'));
     void viewer.setZoom(fullscreenZoom);
     fullscreenZoom = undefined;
   }
 });
+
+const viewerObserver = new MutationObserver(() => {
+  bindViewerEvents();
+  syncFullscreenSlide();
+});
+viewerObserver.observe(elements.viewerContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy'] });
