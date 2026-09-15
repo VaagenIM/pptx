@@ -55,6 +55,10 @@ if (viewerParams.get('embed') === '1') {
   if (brandLabel) brandLabel.textContent = 'pptx';
 }
 
+if (viewerParams.get('compact') === '1') {
+  document.documentElement.classList.add('pptx-compact');
+}
+
 const downloadButton = document.createElement('button');
 downloadButton.className = 'text-button';
 downloadButton.type = 'button';

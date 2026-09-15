@@ -1,405 +1,799 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browse and download the public PowerPoint files in the VaagenIM/pptx repository.">
-  <title>Public PowerPoints</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #f6f8fa;
-      --panel: #fff;
-      --text: #1f2328;
-      --muted: #656d76;
-      --border: #d0d7de;
-      --accent: #0969da;
-      --accent-contrast: #fff;
-      --code: #f0f3f6;
-      --error: #cf222e;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0d1117;
-        --panel: #161b22;
-        --text: #e6edf3;
-        --muted: #8b949e;
-        --border: #30363d;
-        --accent: #58a6ff;
-        --code: #21262d;
-        --error: #ff7b72;
-      }
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    main { margin: 0 auto; max-width: 1100px; padding: 2rem 1rem 4rem; }
-    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
-    a { color: var(--accent); }
-    .subtitle { color: var(--muted); margin: .35rem 0 1.5rem; }
-    .toolbar, .file-list, .details {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-    .toolbar { display: flex; flex-wrap: wrap; gap: .75rem; padding: 1rem; }
-    input, select, button {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel);
-      color: var(--text);
-      font: inherit;
-      padding: .55rem .7rem;
-    }
-    input { flex: 1 1 260px; }
-    button { cursor: pointer; }
-    button:hover { border-color: var(--accent); }
-    .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
-    .status { color: var(--muted); margin: 1rem 0 .75rem; }
-    .error { color: var(--error); }
-    .breadcrumbs { display: flex; flex-wrap: wrap; gap: .25rem; margin: 1rem 0; }
-    .breadcrumbs button { border: 0; padding: .15rem .3rem; }
-    .file-list { overflow: hidden; }
-    .row {
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      display: grid;
-      gap: .75rem;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      padding: .8rem 1rem;
-    }
-    .row:last-child { border-bottom: 0; }
-    .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .name button { border: 0; padding: 0; text-align: left; }
-    .icon { display: inline-block; width: 1.5rem; }
-    .meta { color: var(--muted); font-size: .9rem; }
-    .details { margin-top: 1rem; padding: 1rem; }
-    .shortcuts { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
-    .shortcuts > a, .shortcuts > button { align-items: center; display: inline-flex; min-height: 2.25rem; padding: .35rem .6rem; }
-    .text-action { border: 0; color: var(--accent); padding: .2rem; text-decoration: underline; }
-    dialog { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); max-width: min(680px, calc(100% - 2rem)); padding: 1.25rem; width: 100%; }
-    dialog::backdrop { backdrop-filter: blur(5px); background: rgb(0 0 0 / 35%); }
-    .code-preview { background: var(--code); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: copy; display: block; font: .85rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin: .75rem 0; overflow-x: auto; padding: .6rem; white-space: nowrap; }
-    .code-preview:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .code-tag { color: #cf222e; }
-    .code-attribute { color: #8250df; }
-    .code-value { color: #0a7b52; }
-    .modal-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
-    code { background: var(--code); border-radius: 4px; padding: .15rem .3rem; }
-    footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; }
-    body.embed-mode main { max-width: 900px; padding: 1rem; }
-    body.embed-mode h1, body.embed-mode .subtitle, body.embed-mode footer { display: none; }
-    @media (max-width: 600px) {
-      .row { grid-template-columns: minmax(0, 1fr) auto; }
-      .row .meta { display: none; }
-    }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Browse and download the public PowerPoint files in the VaagenIM/pptx repository.">
+    <title>Public PowerPoints</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f6f8fa;
+            --panel: #fff;
+            --text: #1f2328;
+            --muted: #656d76;
+            --border: #d0d7de;
+            --accent: #0969da;
+            --accent-contrast: #fff;
+            --code: #f0f3f6;
+            --error: #cf222e;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0d1117;
+                --panel: #161b22;
+                --text: #e6edf3;
+                --muted: #8b949e;
+                --border: #30363d;
+                --accent: #58a6ff;
+                --code: #21262d;
+                --error: #ff7b72;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        main {
+            margin: 0 auto;
+            max-width: 1100px;
+            padding: 2rem 1rem 4rem;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: .35rem 0 1.5rem;
+        }
+
+        .toolbar, .file-list, .details {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem;
+            padding: 1rem;
+        }
+
+        input, select, button {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--panel);
+            color: var(--text);
+            font: inherit;
+            padding: .55rem .7rem;
+        }
+
+        input {
+            flex: 1 1 260px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:hover {
+            border-color: var(--accent);
+        }
+
+        .primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--accent-contrast);
+        }
+
+        .status {
+            color: var(--muted);
+            margin: 1rem 0 .75rem;
+        }
+
+        .error {
+            color: var(--error);
+        }
+
+        .breadcrumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .25rem;
+            margin: 1rem 0;
+        }
+
+        .breadcrumbs button {
+            border: 0;
+            padding: .15rem .3rem;
+        }
+
+        .file-list {
+            overflow: hidden;
+        }
+
+        .row {
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            padding: .8rem 1rem;
+        }
+
+        .row:last-child {
+            border-bottom: 0;
+        }
+
+        .name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .name button {
+            border: 0;
+            padding: 0;
+            text-align: left;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 1.5rem;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .details {
+            margin-top: 1rem;
+            padding: 1rem;
+        }
+
+        .shortcuts {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            justify-content: flex-end;
+        }
+
+        .shortcuts > a, .shortcuts > button {
+            align-items: center;
+            display: inline-flex;
+            line-height: 1;
+            min-height: 2.25rem;
+            padding: .35rem .2rem;
+        }
+
+        .embed-action {
+            align-items: center;
+            gap: .3rem;
+        }
+
+        .icon-action {
+            padding-inline: .35rem !important;
+        }
+
+        .shortcuts svg {
+            display: block;
+            fill: none;
+            height: 1rem;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.8;
+            width: 1rem;
+        }
+
+        .embed-action span {
+            line-height: 1;
+        }
+
+        @keyframes copy-toast-in {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 8px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .copy-toast {
+            animation: copy-toast-in 220ms ease-out;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgb(15 23 42 / 20%);
+            color: #1f2328;
+            font-size: .78rem;
+            font-weight: 500;
+            padding: .45rem .75rem;
+            pointer-events: none;
+            position: fixed;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .text-action {
+            border: 0;
+            color: var(--accent);
+            padding: .2rem;
+            text-decoration: underline;
+        }
+
+        dialog {
+            background: linear-gradient(145deg, var(--panel), var(--bg));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 24px 80px rgb(0 0 0 / 30%);
+            color: var(--text);
+            max-width: min(680px, calc(100% - 2rem));
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        dialog::backdrop {
+            backdrop-filter: blur(3px);
+            background: rgb(15 23 42 / 35%);
+        }
+
+        dialog h2 {
+            font-size: 1.35rem;
+            letter-spacing: -.02em;
+            margin: 0;
+        }
+
+        .modal-heading {
+            align-items: start;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .modal-heading p {
+            color: var(--muted);
+            font-size: .9rem;
+            margin: .25rem 0 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .modal-url {
+            background: var(--code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font: .82rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+            margin: 1rem 0;
+            overflow: hidden;
+            padding: .75rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .modal-preview-frame {
+            aspect-ratio: 16 / 9;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 360px;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .modal-preview {
+            border: 0;
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+
+        .modal-links a, .modal-links button {
+            background: var(--code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: .45rem .7rem;
+            text-decoration: none;
+        }
+
+        .modal-links a:hover, .modal-links button:hover {
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-footer {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem;
+            justify-content: space-between;
+        }
+
+        .modal-links {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .modal-links a, .modal-links button, .modal-actions button {
+            align-items: center;
+            display: inline-flex;
+            line-height: 1;
+            min-height: 2.25rem;
+        }
+
+        code {
+            background: var(--code);
+            border-radius: 4px;
+            padding: .15rem .3rem;
+        }
+
+        footer {
+            color: var(--muted);
+            font-size: .9rem;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        body.embed-mode main {
+            max-width: 900px;
+            padding: 1rem;
+        }
+
+        body.embed-mode h1, body.embed-mode .subtitle, body.embed-mode footer {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .row {
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+
+            .row .meta {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-  <main>
-    <h1>Public PowerPoints</h1>
-    <p class="subtitle">Browse every file in <a id="repo-link" href="https://github.com/VaagenIM/pptx">VaagenIM/pptx</a>.</p>
+<main>
+    <h1>pptx</h1>
+    <p class="subtitle">Powerpoints from <a id="repo-link" href="https://github.com/VaagenIM/pptx">VaagenIM/pptx</a></p>
     <section class="toolbar" aria-label="File filters">
-      <input id="search" type="search" placeholder="Search files and folders…" aria-label="Search files and folders">
-      <select id="type" aria-label="Filter by file type">
-        <option value="all">All file types</option>
-        <option value="pptx">PowerPoint (.pptx)</option>
-        <option value="ppt">PowerPoint (.ppt)</option>
-        <option value="other">Other files</option>
-      </select>
-      <button id="refresh" class="primary" type="button">Refresh</button>
+        <input id="search" type="search" placeholder="Search files and folders…" aria-label="Search files and folders">
+        <select id="type" aria-label="Filter by file type">
+            <option value="all">All file types</option>
+            <option value="pptx">PowerPoint (.pptx)</option>
+            <option value="ppt">PowerPoint (.ppt)</option>
+            <option value="other">Other files</option>
+        </select>
+        <button id="refresh" class="primary" type="button">Refresh</button>
     </section>
     <div id="status" class="status" role="status">Loading repository files…</div>
     <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
     <section id="files" class="file-list" aria-live="polite"></section>
     <section id="details" class="details" hidden></section>
     <dialog id="copy-modal" aria-labelledby="copy-modal-title">
-      <h2 id="copy-modal-title">Copy file</h2>
-      <p id="copy-modal-path" class="meta"></p>
-      <code id="copy-preview" class="code-preview" tabindex="0" title="Click to copy"></code>
-      <div class="modal-actions">
-        <button id="copy-url" type="button">Copy URL</button>
-        <button id="copy-embed-code" type="button">Copy embed code</button>
-        <button id="close-copy-modal" type="button">Close</button>
-      </div>
+        <div class="modal-heading">
+            <div>
+                <h2 id="copy-modal-title">File actions</h2>
+                <p id="copy-modal-path"></p>
+            </div>
+            <button id="close-copy-modal-top" type="button" aria-label="Close">×</button>
+        </div>
+        <div id="modal-preview"></div>
+        <div id="copy-preview" class="modal-url"></div>
+        <div class="modal-footer">
+            <div id="copy-modal-links" class="modal-links"></div>
+            <div class="modal-actions">
+                <button id="close-copy-modal" type="button">Close</button>
+            </div>
+        </div>
     </dialog>
     <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.
-      Viewer powered by <a href="https://github.com/costinEEST/pptx-web" target="_blank" rel="noopener">pptx-web</a>.
+        Viewer powered by <a href="https://github.com/costinEEST/pptx-web" target="_blank" rel="noopener">pptx-web</a>.
     </footer>
-  </main>
-  <script>
+</main>
+<script>
     (() => {
-      const owner = "VaagenIM";
-      const repo = "pptx";
-      const branch = "public";
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-      const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
-      const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
-      const viewerBase = "https://pptx.iktim.no/viewer/";
-      const rootPath = "powerpoints";
-      const state = { entries: [], path: rootPath, query: "", type: "all" };
-      const $ = (id) => document.getElementById(id);
+        const owner = "VaagenIM";
+        const repo = "pptx";
+        const branch = "public";
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+        const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+        const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
+        const viewerBase = "https://pptx.iktim.no/viewer/";
+        const rootPath = "powerpoints";
+        const state = {entries: [], path: rootPath, query: "", type: "all"};
+        const $ = (id) => document.getElementById(id);
 
-      function viewerUrl(rawUrl) {
-        const url = new URL(viewerBase);
-        url.searchParams.set("url", rawUrl);
-        url.searchParams.set("embed", "1");
-        url.searchParams.set("sidebar", "0");
-        return url.href;
-      }
-
-      function setStatus(message, error = false) {
-        $("status").textContent = message;
-        $("status").className = error ? "status error" : "status";
-      }
-
-      function fileType(path) {
-        const extension = path.split(".").pop().toLowerCase();
-        return extension === "pptx" || extension === "ppt" ? extension : "other";
-      }
-
-      function isPublicEntry(entry) {
-        const path = entry.path.toLowerCase();
-        const name = path.split("/").pop();
-        const extension = name.includes(".") ? name.split(".").pop() : "";
-        return path !== "docs" && path !== ".github" && path !== "viewer" &&
-          name !== "readme.md" && name !== ".gitignore" && name !== ".gitmodules" &&
-          extension !== "css" && extension !== "js" &&
-          !path.startsWith("docs/") && !path.startsWith(".github/") && !path.startsWith("viewer/");
-      }
-
-      function visibleEntries() {
-        const prefix = state.path ? `${state.path}/` : "";
-        const query = state.query.trim().toLowerCase();
-        if (query) {
-          return state.entries
-            .filter((entry) => entry.type === "blob" && entry.path.startsWith(`${rootPath}/`) && entry.path.toLowerCase().includes(query))
-            .filter((entry) => state.type === "all" || fileType(entry.path) === state.type)
-            .map((entry) => ({ path: entry.path, name: entry.path.slice(rootPath.length + 1), type: entry.type, size: entry.size }))
-            .sort((a, b) => a.path.localeCompare(b.path));
+        function viewerUrl(rawUrl, embedded = true, compact = false) {
+            const url = new URL(viewerBase);
+            url.searchParams.set("url", rawUrl);
+            url.searchParams.set("embed", embedded ? "1" : "0");
+            url.searchParams.set("sidebar", embedded ? "0" : "1");
+            if (compact) url.searchParams.set("compact", "1");
+            return url.href;
         }
-        const children = new Map();
-        state.entries.forEach((entry) => {
-          if (!entry.path.startsWith(prefix)) return;
-          const remainder = entry.path.slice(prefix.length);
-          if (!remainder) return;
-          const [name] = remainder.split("/");
-          const childPath = prefix + name;
-          if (!children.has(childPath)) {
-            children.set(childPath, {
-              path: childPath,
-              name,
-              type: remainder.includes("/") ? "tree" : entry.type,
-              size: remainder.includes("/") ? null : entry.size
+
+        function setStatus(message, error = false) {
+            $("status").textContent = message;
+            $("status").className = error ? "status error" : "status";
+        }
+
+        function fileType(path) {
+            const extension = path.split(".").pop().toLowerCase();
+            return extension === "pptx" || extension === "ppt" ? extension : "other";
+        }
+
+        function isPublicEntry(entry) {
+            const path = entry.path.toLowerCase();
+            const name = path.split("/").pop();
+            const extension = name.includes(".") ? name.split(".").pop() : "";
+            return path !== "docs" && path !== ".github" && path !== "viewer" &&
+                name !== "readme.md" && name !== ".gitignore" && name !== ".gitmodules" &&
+                extension !== "css" && extension !== "js" &&
+                !path.startsWith("docs/") && !path.startsWith(".github/") && !path.startsWith("viewer/");
+        }
+
+        function visibleEntries() {
+            const prefix = state.path ? `${state.path}/` : "";
+            const query = state.query.trim().toLowerCase();
+            if (query) {
+                return state.entries
+                    .filter((entry) => entry.type === "blob" && entry.path.startsWith(`${rootPath}/`) && entry.path.toLowerCase().includes(query))
+                    .filter((entry) => state.type === "all" || fileType(entry.path) === state.type)
+                    .map((entry) => ({
+                        path: entry.path,
+                        name: entry.path.slice(rootPath.length + 1),
+                        type: entry.type,
+                        size: entry.size
+                    }))
+                    .sort((a, b) => a.path.localeCompare(b.path));
+            }
+            const children = new Map();
+            state.entries.forEach((entry) => {
+                if (!entry.path.startsWith(prefix)) return;
+                const remainder = entry.path.slice(prefix.length);
+                if (!remainder) return;
+                const [name] = remainder.split("/");
+                const childPath = prefix + name;
+                if (!children.has(childPath)) {
+                    children.set(childPath, {
+                        path: childPath,
+                        name,
+                        type: remainder.includes("/") ? "tree" : entry.type,
+                        size: remainder.includes("/") ? null : entry.size
+                    });
+                }
             });
-          }
-        });
-        return [...children.values()]
-          .filter((entry) => entry.type === "tree" || state.type === "all" || fileType(entry.path) === state.type)
-          .sort((a, b) => (a.type !== b.type ? (a.type === "tree" ? -1 : 1) : a.name.localeCompare(b.name)));
-      }
-
-      function formatSize(bytes) {
-        if (bytes == null) return "Folder";
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-      }
-
-      function renderBreadcrumbs() {
-        const parts = state.path === rootPath ? [] : state.path.slice(rootPath.length + 1).split("/");
-        $("breadcrumbs").innerHTML = "";
-        [["PowerPoints", rootPath]].concat(parts.map((part, index) => [part, `${rootPath}/${parts.slice(0, index + 1).join("/")}`]))
-          .forEach(([label, path], index, all) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.textContent = label;
-            button.onclick = () => { state.path = path; render(); };
-            $("breadcrumbs").append(button);
-            if (index < all.length - 1) $("breadcrumbs").append(document.createTextNode(" / "));
-          });
-      }
-
-      function copy(text, button) {
-        const isPreview = button.classList?.contains("code-preview");
-        const originalMarkup = isPreview ? button.innerHTML : "";
-        if (!button.dataset.copyWidth) {
-          button.dataset.copyWidth = `${button.getBoundingClientRect().width}px`;
-          button.style.minWidth = button.dataset.copyWidth;
+            return [...children.values()]
+                .filter((entry) => entry.type === "tree" || state.type === "all" || fileType(entry.path) === state.type)
+                .sort((a, b) => (a.type !== b.type ? (a.type === "tree" ? -1 : 1) : a.name.localeCompare(b.name)));
         }
-        navigator.clipboard.writeText(text).then(() => {
-          const original = button.textContent;
-          button.textContent = "Copied";
-          setTimeout(() => {
-            if (isPreview) button.innerHTML = originalMarkup;
-            else button.textContent = original;
-          }, 1200);
-        }).catch(() => setStatus("Unable to copy to the clipboard.", true));
-      }
 
-      function highlightCode(source) {
-        const escaped = source.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        return escaped.split(/(&lt;\/?iframe|(?:class|src|width|height|allow|allowfullscreen|frameborder|title)(?==)|&quot;[^&]*&quot;)/g)
-          .map((token) => {
-            if (token.startsWith("&lt;")) return `<span class="code-tag">${token}</span>`;
-            if (/^(class|src|width|height|allow|allowfullscreen|frameborder|title)$/.test(token)) {
-              return `<span class="code-attribute">${token}</span>`;
+        function formatSize(bytes) {
+            if (bytes == null) return "Folder";
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        function formatModalTitle(path) {
+            const filename = path.split("/").pop().replace(/\.[^.]+$/, "");
+            return `${filename.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\b\w/g, (letter) => letter.toUpperCase())} · Details`;
+        }
+
+        function renderBreadcrumbs() {
+            const parts = state.path === rootPath ? [] : state.path.slice(rootPath.length + 1).split("/");
+            $("breadcrumbs").innerHTML = "";
+            [["PowerPoints", rootPath]].concat(parts.map((part, index) => [part, `${rootPath}/${parts.slice(0, index + 1).join("/")}`]))
+                .forEach(([label, path], index, all) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = label;
+                    button.onclick = () => {
+                        state.path = path;
+                        render();
+                    };
+                    $("breadcrumbs").append(button);
+                    if (index < all.length - 1) $("breadcrumbs").append(document.createTextNode(" / "));
+                });
+        }
+
+        function copy(text, button, event, message = "Copied") {
+            if (!button.dataset.copyWidth) {
+                button.dataset.copyWidth = `${button.getBoundingClientRect().width}px`;
+                button.style.minWidth = button.dataset.copyWidth;
             }
-            if (token.startsWith("&quot;")) return `<span class="code-value">${token}</span>`;
-            return token;
-          }).join("");
-      }
-
-      function openCopyModal(entry) {
-        const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
-        const fileUrl = entry.type === "tree"
-          ? githubBase + entry.path.split("/").map(encodeURIComponent).join("/")
-          : rawUrl;
-        const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
-        const embedCode = isPowerPoint
-          ? `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`
-          : "";
-        $("copy-modal-path").textContent = entry.path;
-        const preview = $("copy-preview");
-        const previewText = embedCode || fileUrl;
-        preview.innerHTML = highlightCode(previewText);
-        preview.onclick = () => copy(previewText, preview);
-        preview.onkeydown = (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            copy(previewText, preview);
-          }
-        };
-        $("copy-url").onclick = () => copy(fileUrl, $("copy-url"));
-        $("copy-embed-code").hidden = !isPowerPoint;
-        $("copy-embed-code").onclick = () => copy(embedCode, $("copy-embed-code"));
-        $("copy-modal").showModal();
-      }
-
-      function renderDetails(entry) {
-        const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
-        const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
-        $("details").hidden = false;
-        $("details").innerHTML = `<strong>${entry.path}</strong><p class="meta">${formatSize(entry.size)}</p>`;
-        const copyPath = document.createElement("button");
-        copyPath.textContent = "Copy path";
-        copyPath.onclick = () => copy(entry.path, copyPath);
-        const copyUrl = document.createElement("button");
-        copyUrl.textContent = "Copy File URL";
-        copyUrl.onclick = () => copy(rawUrl, copyUrl);
-        const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
-        let presentationUrl;
-        if (isPowerPoint) {
-          presentationUrl = viewerUrl(rawUrl);
-          const copyEmbed = document.createElement("button");
-          copyEmbed.textContent = "Copy embed code";
-          copyEmbed.style.marginLeft = ".5rem";
-          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${presentationUrl}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
-          $("details").append(copyEmbed);
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.createElement("span");
+                toast.className = "copy-toast";
+                toast.textContent = message;
+                const rect = button.getBoundingClientRect();
+                const left = rect.left + rect.width / 2;
+                toast.style.left = `${Math.min((window.innerWidth - 8), Math.max(8, left))}px`;
+                toast.style.top = `${Math.max(8, rect.top - 32)}px`;
+                const toastHost = $("copy-modal").open ? $("copy-modal") : document.body;
+                toastHost.append(toast);
+                setTimeout(() => toast.remove(), 1200);
+            }).catch(() => setStatus("Unable to copy to the clipboard.", true));
         }
-        const open = document.createElement("a");
-        open.href = githubUrl;
-        open.target = "_blank";
-        open.rel = "noopener";
-        open.textContent = "View on GitHub";
-        open.style.marginLeft = ".5rem";
-        $("details").append(copyPath, " ", copyUrl, " ", open);
-        if (isPowerPoint) {
-          const viewOnline = document.createElement("a");
-          viewOnline.href = presentationUrl;
-          viewOnline.target = "_blank";
-          viewOnline.rel = "noopener";
-          viewOnline.textContent = "View online";
-          viewOnline.style.marginLeft = ".5rem";
-          $("details").append(viewOnline);
-        }
-      }
 
-      function render() {
-        renderBreadcrumbs();
-        const entries = visibleEntries();
-        $("files").innerHTML = "";
-        $("details").hidden = true;
-        if (!entries.length) {
-          $("files").textContent = "No matching files or folders.";
-          return;
+        function embedCodeFor(entry, rawUrl) {
+            return `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`;
         }
-        entries.forEach((entry) => {
-          const row = document.createElement("div");
-          row.className = "row";
-          const name = document.createElement("div");
-          name.className = "name";
-          const button = document.createElement("button");
-          button.type = "button";
-          button.innerHTML = `<span class="icon">${entry.type === "tree" ? "📁" : "📄"}</span>${entry.name}`;
-          button.onclick = () => entry.type === "tree" ? (state.path = entry.path, render()) : renderDetails(entry);
-          name.append(button);
-          const meta = document.createElement("span");
-          meta.className = "meta";
-          meta.textContent = formatSize(entry.size);
-          const shortcuts = document.createElement("div");
-          shortcuts.className = "shortcuts";
-          const copyPath = document.createElement("a");
-          copyPath.href = "#";
-          copyPath.textContent = "Copy";
-          copyPath.className = "text-action";
-          copyPath.onclick = (event) => { event.preventDefault(); openCopyModal(entry); };
-          shortcuts.append(copyPath);
-          if (entry.type !== "tree") {
-            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+
+        function createEmbedAction(entry, rawUrl) {
             const action = document.createElement("a");
-            action.href = rawUrl;
-            action.download = entry.name;
-            action.textContent = "Download";
-            shortcuts.append(action);
-            if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
-              const viewOnline = document.createElement("a");
-              viewOnline.href = viewerUrl(rawUrl);
-              viewOnline.target = "_blank";
-              viewOnline.rel = "noopener";
-              viewOnline.textContent = "View online";
-              shortcuts.append(viewOnline);
-            }
-          } else {
-            shortcuts.append(document.createElement("span"));
-          }
-          row.append(name, meta, shortcuts);
-          $("files").append(row);
-        });
-      }
-
-      async function load() {
-        setStatus("Loading repository files…");
-        try {
-          const response = await fetch(apiUrl, { headers: { Accept: "application/vnd.github+json" } });
-          if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
-          const data = await response.json();
-          if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
-          state.entries = (data.tree || [])
-            .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry));
-          state.path = rootPath;
-          render();
-          setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);
-        } catch (error) {
-          setStatus(`Could not load repository files: ${error.message}`, true);
-          $("files").textContent = "Try refreshing or browse the repository on GitHub.";
+            action.href = "#";
+            action.className = "embed-action";
+            action.setAttribute("title", "Copy embed code");
+            action.setAttribute("aria-label", "Copy embed code");
+            action.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7-5 5 5 5M15 7l5 5-5 5"></path></svg>`;
+            action.onclick = (event) => {
+                event.preventDefault();
+                copy(embedCodeFor(entry, rawUrl), action, event, "Copied embed code");
+            };
+            return action;
         }
-      }
 
-      $("search").oninput = (event) => { state.query = event.target.value; render(); };
-      $("type").onchange = (event) => { state.type = event.target.value; render(); };
-      $("refresh").onclick = load;
-      $("close-copy-modal").onclick = () => $("copy-modal").close();
-      $("copy-modal").onclick = (event) => {
-        if (event.target === $("copy-modal")) $("copy-modal").close();
-      };
-      if (new URLSearchParams(window.location.search).get("embed") === "1") document.body.classList.add("embed-mode");
-      load();
+        function createCopyAction(entry, rawUrl) {
+            const action = document.createElement("a");
+            action.href = "#";
+            action.className = "icon-action";
+            const copyUrl = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt"
+                ? viewerUrl(rawUrl, false)
+                : rawUrl;
+            action.setAttribute("title", "Copy view URL");
+            action.setAttribute("aria-label", "Copy view URL");
+            action.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="1.5"></rect><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4H6a2 2 0 0 0-2 2v10a1.5 1.5 0 0 0 1.5 1.5H8"></path></svg>`;
+            action.onclick = (event) => {
+                event.preventDefault();
+                copy(copyUrl, action, event, "Copied view URL");
+            };
+            return action;
+        }
+
+        function openCopyModal(entry) {
+            const modal = $("copy-modal");
+            if (modal.open) modal.close();
+            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            const fileUrl = entry.type === "tree"
+                ? githubBase + entry.path.split("/").map(encodeURIComponent).join("/")
+                : rawUrl;
+            const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
+            const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            $("copy-modal-title").textContent = formatModalTitle(entry.path);
+            $("copy-modal-path").textContent = `${entry.path} · ${formatSize(entry.size)}`;
+            const preview = $("copy-preview");
+            const previewText = fileUrl;
+            preview.textContent = previewText;
+            const links = $("copy-modal-links");
+            links.replaceChildren();
+            const copyViewButton = document.createElement("button");
+            copyViewButton.type = "button";
+            copyViewButton.textContent = "Copy URL";
+            copyViewButton.onclick = (event) => copy(isPowerPoint ? viewerUrl(rawUrl, false) : fileUrl, copyViewButton, event, "Copied URL");
+            const copyDownloadButton = document.createElement("button");
+            copyDownloadButton.type = "button";
+            copyDownloadButton.textContent = "Copy download URL";
+            copyDownloadButton.onclick = (event) => copy(rawUrl, copyDownloadButton, event, "Copied download URL");
+            const previewFrame = $("modal-preview");
+            previewFrame.replaceChildren();
+            if (!isPowerPoint) {
+                links.append(copyViewButton, copyDownloadButton);
+                const github = document.createElement("a");
+                github.href = githubUrl;
+                github.target = "_blank";
+                github.rel = "noopener";
+                github.textContent = "View on GitHub";
+                links.append(github);
+            } else {
+                const embed = document.createElement("a");
+                embed.href = "#";
+                embed.textContent = "Copy embed code";
+                embed.onclick = (event) => {
+                    event.preventDefault();
+                    copy(embedCodeFor(entry, rawUrl), embed, event, "Copied embed code");
+                };
+                links.append(embed);
+                links.append(copyViewButton, copyDownloadButton);
+                const frame = document.createElement("div");
+                frame.className = "modal-preview-frame";
+                const iframe = document.createElement("iframe");
+                iframe.className = "modal-preview";
+                iframe.src = viewerUrl(rawUrl, true, true);
+                iframe.allow = "fullscreen";
+                iframe.allowFullscreen = true;
+                iframe.title = `${entry.name} preview`;
+                frame.append(iframe);
+                previewFrame.append(frame);
+            }
+            if (isPowerPoint) {
+                const view = document.createElement("a");
+                view.href = viewerUrl(rawUrl, false);
+                view.target = "_blank";
+                view.rel = "noopener";
+                view.textContent = "View";
+                links.append(view);
+            }
+            if (!modal.open) modal.showModal();
+        }
+
+        function renderDetails(entry) {
+            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            $("details").hidden = false;
+            $("details").innerHTML = `<strong>${entry.path}</strong><p class="meta">${formatSize(entry.size)}</p>`;
+            const copyPath = document.createElement("button");
+            copyPath.textContent = "Copy path";
+            copyPath.onclick = () => copy(entry.path, copyPath);
+            const copyUrl = document.createElement("button");
+            copyUrl.textContent = "Copy file URL";
+            copyUrl.onclick = () => copy(rawUrl, copyUrl);
+            const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
+            let presentationUrl;
+            if (isPowerPoint) {
+                presentationUrl = viewerUrl(rawUrl, false);
+                const copyEmbed = document.createElement("button");
+                copyEmbed.textContent = "Copy embed code";
+                copyEmbed.style.marginLeft = ".5rem";
+                copyEmbed.onclick = () => copy(embedCodeFor(entry, rawUrl), copyEmbed);
+                $("details").append(copyEmbed);
+            }
+            const open = document.createElement("a");
+            open.href = githubUrl;
+            open.target = "_blank";
+            open.rel = "noopener";
+            open.textContent = "View on GitHub";
+            open.style.marginLeft = ".5rem";
+            $("details").append(copyPath, " ", copyUrl, " ", open);
+            if (isPowerPoint) {
+                const viewOnline = document.createElement("a");
+                viewOnline.href = presentationUrl;
+                viewOnline.target = "_blank";
+                viewOnline.rel = "noopener";
+                viewOnline.textContent = "View";
+                viewOnline.style.marginLeft = ".5rem";
+                $("details").append(viewOnline);
+            }
+        }
+
+        function render() {
+            renderBreadcrumbs();
+            const entries = visibleEntries();
+            $("files").innerHTML = "";
+            $("details").hidden = true;
+            if (!entries.length) {
+                $("files").textContent = "No matching files or folders.";
+                return;
+            }
+            entries.forEach((entry) => {
+                const row = document.createElement("div");
+                row.className = "row";
+                const name = document.createElement("div");
+                name.className = "name";
+                const button = document.createElement("button");
+                button.type = "button";
+                button.innerHTML = `<span class="icon">${entry.type === "tree" ? "📁" : "📄"}</span>${entry.name}`;
+                button.onclick = () => entry.type === "tree" ? (state.path = entry.path, render()) : openCopyModal(entry);
+                name.append(button);
+                const meta = document.createElement("span");
+                meta.className = "meta";
+                meta.textContent = formatSize(entry.size);
+                const shortcuts = document.createElement("div");
+                shortcuts.className = "shortcuts";
+                const copyPath = document.createElement("a");
+                copyPath.href = "#";
+                copyPath.className = "icon-action";
+                copyPath.setAttribute("aria-label", "More");
+                copyPath.setAttribute("title", "More");
+                copyPath.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>`;
+                copyPath.onclick = (event) => {
+                    event.preventDefault();
+                    openCopyModal(entry);
+                };
+                if (entry.type !== "tree") {
+                    const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+                    if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
+                        shortcuts.append(createEmbedAction(entry, rawUrl));
+                    }
+                    shortcuts.append(createCopyAction(entry, rawUrl));
+                    const action = document.createElement("a");
+                    action.href = rawUrl;
+                    action.download = entry.name;
+                    action.className = "icon-action";
+                    action.setAttribute("aria-label", "Download");
+                    action.setAttribute("title", "Download");
+                    action.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"></path></svg>`;
+                    shortcuts.append(action);
+                    if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
+                        const viewOnline = document.createElement("a");
+                        viewOnline.href = viewerUrl(rawUrl, false);
+                        viewOnline.target = "_blank";
+                        viewOnline.rel = "noopener";
+                        viewOnline.className = "icon-action";
+                        viewOnline.setAttribute("aria-label", "View");
+                        viewOnline.setAttribute("title", "View");
+                        viewOnline.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>`;
+                        shortcuts.append(viewOnline);
+                    }
+                    shortcuts.append(copyPath);
+                } else {
+                    shortcuts.append(copyPath);
+                    shortcuts.append(document.createElement("span"));
+                }
+                row.append(name, meta, shortcuts);
+                $("files").append(row);
+            });
+        }
+
+        async function load() {
+            setStatus("Loading repository files…");
+            try {
+                const response = await fetch(apiUrl, {headers: {Accept: "application/vnd.github+json"}});
+                if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+                const data = await response.json();
+                if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
+                state.entries = (data.tree || [])
+                    .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry));
+                state.path = rootPath;
+                render();
+                setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);
+            } catch (error) {
+                setStatus(`Could not load repository files: ${error.message}`, true);
+                $("files").textContent = "Try refreshing or browse the repository on GitHub.";
+            }
+        }
+
+        $("search").oninput = (event) => {
+            state.query = event.target.value;
+            render();
+        };
+        $("type").onchange = (event) => {
+            state.type = event.target.value;
+            render();
+        };
+        $("refresh").onclick = load;
+        $("close-copy-modal").onclick = () => $("copy-modal").close();
+        $("close-copy-modal-top").onclick = () => $("copy-modal").close();
+        $("copy-modal").onclick = (event) => {
+            if (event.target === $("copy-modal")) $("copy-modal").close();
+        };
+        if (new URLSearchParams(window.location.search).get("embed") === "1") document.body.classList.add("embed-mode");
+        load();
     })();
-  </script>
+</script>
 </body>
 </html>

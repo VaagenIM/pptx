@@ -69,6 +69,28 @@
   font-size: var(--font-size-brand);
 }
 
+.pptx-compact .topbar,
+.pptx-compact .bottombar {
+  min-block-size: 2.5rem;
+  padding-block: .25rem;
+}
+
+.pptx-compact .topbar .brand,
+.pptx-compact .topbar .document-title,
+.pptx-compact .bottombar {
+  font-size: .68rem;
+}
+
+.pptx-compact .topbar .brand-mark {
+  block-size: .85rem;
+  inline-size: 1rem;
+}
+
+.pptx-compact .bottombar button,
+.pptx-compact .bottombar input {
+  min-block-size: 1.7rem;
+}
+
 .topbar,
 .bottombar {
   background: var(--pptx-topbar-background, rgb(17 20 27 / 94%));
