@@ -4,8 +4,105 @@
   display: none;
 }
 
+/* Public customization hooks. Leave these unset to use the viewer defaults. */
+.app,
+.app.is-empty {
+  --font-family: var(--pptx-font-family, Inter, "Avenir Next", "Segoe UI", system-ui, sans-serif);
+  --mono-font-family: var(--pptx-mono-font-family, ui-monospace, "SFMono-Regular", Consolas, monospace);
+  --font-size-body: var(--pptx-font-size-body, 1rem);
+  --font-size-meta: var(--pptx-font-size-meta, 0.78rem);
+  --font-size-control: var(--pptx-font-size-control, 0.68rem);
+  --font-size-heading: var(--pptx-font-size-heading, 1.35rem);
+  --font-size-brand: var(--pptx-font-size-brand, 0.9rem);
+  --ink-950: var(--pptx-surface-deep, #0b0d12);
+  --ink-900: var(--pptx-background, #10131a);
+  --ink-850: var(--pptx-surface, #151922);
+  --ink-800: var(--pptx-surface-raised, #1b202a);
+  --ink-700: var(--pptx-surface-hover, #292f3b);
+  --line: var(--pptx-border, #303744);
+  --line-soft: var(--pptx-border-soft, #252b35);
+  --blue: var(--pptx-primary, #8fb8ff);
+  --blue-strong: var(--pptx-primary-strong, #6c9ef8);
+  --blue-ink: var(--pptx-primary-ink, #111c31);
+  --blue-wash: var(--pptx-primary-wash, rgb(108 158 248 / 13%));
+  --text: var(--pptx-text-color, #f4f2ec);
+  --text-soft: var(--pptx-text-soft, #b4b6bd);
+  --text-faint: var(--pptx-text-muted, #797e89);
+  --red: var(--pptx-danger, #ff9a92);
+  --shadow: var(--pptx-shadow, 0 24px 70px rgb(0 0 0 / 38%));
+  --brand-color: var(--pptx-logo-color, var(--pptx-primary, #8fb8ff));
+}
+
+.app,
+.app button,
+.app input,
+.app label,
+.app select {
+  font-family: var(--font-family);
+}
+
+.app :where(.slide-counter, .view-controls output, .search-box input) {
+  font-family: var(--mono-font-family);
+}
+
+.app {
+  font-size: var(--font-size-body);
+}
+
+.app :where(.button, .topbar-actions, .text-button, .nav-button) {
+  font-size: var(--font-size-control);
+}
+
+.app :where(.document-title, .meta, .status, .footer-status) {
+  font-size: var(--font-size-meta);
+}
+
+.app :where(.tooltip, .search-actions, .view-controls output) {
+  font-size: var(--font-size-control);
+}
+
+.app :where(.welcome h1, .url-dialog h2) {
+  font-size: var(--font-size-heading);
+}
+
+.app .brand {
+  font-size: var(--font-size-brand);
+}
+
+.topbar,
+.bottombar {
+  background: var(--pptx-topbar-background, rgb(17 20 27 / 94%));
+  border-color: var(--pptx-border-soft, #252b35);
+}
+
+.stage {
+  background: var(--pptx-stage-background, var(--ink-900));
+}
+
+.sidebar {
+  background: var(--pptx-sidebar-background, var(--ink-850));
+  border-color: var(--pptx-border-soft, #252b35);
+}
+
+.url-dialog,
+.loading-card,
+.error-toast {
+  background: var(--pptx-dialog-background, var(--ink-850));
+  border-color: var(--pptx-border, #303744);
+  box-shadow: var(--pptx-dialog-shadow, var(--shadow));
+}
+
+.brand-mark {
+  background: var(--brand-color);
+}
+
+.viewer-container > [data-slide-index] > div {
+  background: var(--pptx-slide-background, #fff) !important;
+}
+
 .stage:fullscreen {
   padding: 0;
+  background: var(--pptx-fullscreen-background, #08090c);
 }
 
 .stage:fullscreen .viewer-container {
@@ -32,7 +129,7 @@
   inline-size: 100% !important;
   block-size: 100% !important;
   aspect-ratio: 16 / 9;
-  background: #000 !important;
+  background: var(--pptx-slide-background, #000) !important;
 }
 
 .stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide > div > * {

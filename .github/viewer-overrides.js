@@ -1,9 +1,49 @@
 const viewerParams = new URLSearchParams(window.location.search);
 let localPresentationFile = null;
 
+for (const name of [
+  'pptx-primary',
+  'pptx-primary-strong',
+  'pptx-primary-ink',
+  'pptx-primary-wash',
+  'pptx-text-color',
+  'pptx-text-soft',
+  'pptx-text-muted',
+  'pptx-logo-color',
+  'pptx-font-family',
+  'pptx-mono-font-family',
+  'pptx-font-size-body',
+  'pptx-font-size-meta',
+  'pptx-font-size-control',
+  'pptx-font-size-heading',
+  'pptx-font-size-brand',
+  'pptx-surface-deep',
+  'pptx-background',
+  'pptx-surface',
+  'pptx-surface-raised',
+  'pptx-surface-hover',
+  'pptx-border',
+  'pptx-border-soft',
+  'pptx-topbar-background',
+  'pptx-stage-background',
+  'pptx-sidebar-background',
+  'pptx-dialog-background',
+  'pptx-dialog-shadow',
+  'pptx-shadow',
+  'pptx-danger',
+  'pptx-fullscreen-background',
+  'pptx-slide-background',
+]) {
+  const value = viewerParams.get(name);
+  if (value) document.documentElement.style.setProperty(`--${name}`, value);
+}
+
 if (viewerParams.get('embed') === '1') {
   document.documentElement.classList.add('pptx-embedded');
-  document.querySelector('.brand')?.removeAttribute('href');
+  const brand = document.querySelector('.brand');
+  brand?.removeAttribute('href');
+  const brandLabel = brand?.querySelector('span:last-child');
+  if (brandLabel) brandLabel.textContent = 'pptx';
 }
 
 const downloadButton = document.createElement('button');
