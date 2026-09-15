@@ -3,6 +3,7 @@ let localPresentationFile = null;
 
 if (viewerParams.get('embed') === '1') {
   document.documentElement.classList.add('pptx-embedded');
+  document.querySelector('.brand')?.removeAttribute('href');
 }
 
 const downloadButton = document.createElement('button');
@@ -97,9 +98,11 @@ document.addEventListener('fullscreenchange', () => {
   bindViewerEvents();
   if (document.fullscreenElement === elements.stage) {
     fullscreenZoom = viewer.zoomPercent;
+    const frameWidth = Math.min(elements.stage.clientWidth, elements.stage.clientHeight * (16 / 9));
+    const frameHeight = frameWidth * (9 / 16);
     const fitScale = elements.viewerContainer.clientWidth / viewer.slideWidth;
-    const heightScale = elements.stage.clientHeight / viewer.slideHeight;
-    void viewer.setZoom((heightScale / fitScale) * 100);
+    const slideScale = Math.min(frameWidth / viewer.slideWidth, frameHeight / viewer.slideHeight);
+    void viewer.setZoom((slideScale / fitScale) * 100);
     requestAnimationFrame(syncFullscreenSlide);
   } else if (fullscreenZoom !== undefined) {
     document.querySelectorAll('.pptx-fullscreen-slide').forEach((item) => item.classList.remove('pptx-fullscreen-slide'));

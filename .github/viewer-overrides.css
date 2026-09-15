@@ -19,12 +19,22 @@
 
 .stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide {
   display: block !important;
-  inline-size: 100vw !important;
-  block-size: 100vh !important;
-  margin: 0 !important;
+  inline-size: min(100vw, calc(100vh * 16 / 9)) !important;
+  block-size: min(100vh, calc(100vw * 9 / 16)) !important;
+  aspect-ratio: 16 / 9;
+  margin: auto !important;
 }
 
 .stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide > div {
-  inline-size: 100vw !important;
-  block-size: 100vh !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100% !important;
+  block-size: 100% !important;
+  aspect-ratio: 16 / 9;
+  background: #000 !important;
+}
+
+.stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide > div > * {
+  transform-origin: center center !important;
 }
