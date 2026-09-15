@@ -145,6 +145,7 @@
         const url = new URL(viewerBase);
         url.searchParams.set("url", rawUrl);
         url.searchParams.set("embed", "1");
+        url.searchParams.set("sidebar", "0");
         return url.href;
       }
 
