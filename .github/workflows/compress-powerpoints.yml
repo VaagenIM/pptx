@@ -36,6 +36,7 @@ jobs:
             git -C /tmp/compressed checkout -b public
             git -C /tmp/compressed remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
           fi
+          git -C /tmp/compressed remote set-url origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
 
       - name: Compress newly added presentations
         run: |
