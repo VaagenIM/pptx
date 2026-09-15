@@ -2,3 +2,5 @@
 .venv/
 uv.lock
 pyproject.toml
+node_modules/
+dist/
