@@ -38,6 +38,15 @@ for (const name of [
   if (value) document.documentElement.style.setProperty(`--${name}`, value);
 }
 
+window.addEventListener('message', (event) => {
+  if (event.data?.type !== 'pptx-theme' || !event.data.variables) return;
+  for (const [name, value] of Object.entries(event.data.variables)) {
+    if (/^--pptx-[a-z-]+$/.test(name) && typeof value === 'string') {
+      document.documentElement.style.setProperty(name, value);
+    }
+  }
+});
+
 if (viewerParams.get('embed') === '1') {
   document.documentElement.classList.add('pptx-embedded');
   const brand = document.querySelector('.brand');

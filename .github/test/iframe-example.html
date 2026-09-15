@@ -45,6 +45,23 @@
             padding: 2rem;
             font-family: system-ui, sans-serif;
         }
+        .theme-controls {
+            width: var(--frame-width);
+            margin: 0 auto 1rem;
+        }
+        .theme-button {
+            margin-right: .4rem;
+            padding: .5rem .8rem;
+            border: 1px solid #607b50;
+            border-radius: 999px;
+            background: #f7f4e9;
+            color: #203126;
+            cursor: pointer;
+        }
+        .theme-button[aria-pressed="true"] {
+            background: #6b8e23;
+            color: #f7f4e9;
+        }
 
         .pptx-embed {
             display: block;
@@ -57,6 +74,12 @@
     </style>
 </head>
 <body>
+<div class="theme-controls">
+  <span>Theme: </span>
+  <button class="theme-button" type="button" data-theme="nature" aria-pressed="true">Jungle</button>
+  <button class="theme-button" type="button" data-theme="ocean" aria-pressed="false">Ocean</button>
+  <button class="theme-button" type="button" data-theme="default" aria-pressed="false">Default</button>
+</div>
 <iframe
         class="pptx-embed"
         src="http://localhost:5173/pptx-web/?url=http%3A%2F%2Flocalhost%3A8000%2Fpowerpoints%2Ftest.pptx&amp;embed=1&amp;sidebar=0"
@@ -66,5 +89,54 @@
         title="Test PowerPoint">
 </iframe>
 <script src="pptx-embed.min.js"></script>
+<script>
+  const themes = {
+    nature: {
+      "--pptx-primary": "#6b8e23", "--pptx-primary-strong": "#4f6f1b", "--pptx-primary-ink": "#f7f4e9",
+      "--pptx-primary-wash": "rgb(107 142 35 / 18%)", "--pptx-text-color": "#f2f4e8",
+      "--pptx-text-soft": "#c5d2b4", "--pptx-text-muted": "#92a684", "--pptx-logo-color": "#8fbc5a",
+      "--pptx-font-family": "Georgia, serif", "--pptx-mono-font-family": "\"Courier New\", monospace",
+      "--pptx-background": "#203126", "--pptx-surface": "#2b4030", "--pptx-surface-raised": "#38543a",
+      "--pptx-surface-hover": "#466744", "--pptx-border": "#607b50", "--pptx-border-soft": "#405b3d",
+      "--pptx-topbar-background": "rgb(26 45 29 / 94%)", "--pptx-stage-background": "#203126",
+      "--pptx-sidebar-background": "#2b4030", "--pptx-dialog-background": "#2b4030",
+      "--pptx-slide-background": "#f7f4e9"
+    },
+    ocean: {
+      "--pptx-primary": "#38bdf8", "--pptx-primary-strong": "#0284c7", "--pptx-primary-ink": "#082f49",
+      "--pptx-primary-wash": "rgb(56 189 248 / 18%)", "--pptx-text-color": "#e0f2fe",
+      "--pptx-text-soft": "#bae6fd", "--pptx-text-muted": "#7dd3fc", "--pptx-logo-color": "#22d3ee",
+      "--pptx-font-family": "Trebuchet MS, sans-serif", "--pptx-mono-font-family": "Consolas, monospace",
+      "--pptx-background": "#082f49", "--pptx-surface": "#0c4a6e", "--pptx-surface-raised": "#075985",
+      "--pptx-surface-hover": "#0369a1", "--pptx-border": "#38bdf8", "--pptx-border-soft": "#155e75",
+      "--pptx-topbar-background": "rgb(8 47 73 / 94%)", "--pptx-stage-background": "#082f49",
+      "--pptx-sidebar-background": "#0c4a6e", "--pptx-dialog-background": "#0c4a6e",
+      "--pptx-slide-background": "#e0f2fe"
+    },
+    default: {
+      "--pptx-primary": "#8fb8ff", "--pptx-primary-strong": "#6c9ef8", "--pptx-primary-ink": "#111c31",
+      "--pptx-primary-wash": "rgb(108 158 248 / 13%)", "--pptx-text-color": "#f4f2ec",
+      "--pptx-text-soft": "#b4b6bd", "--pptx-text-muted": "#797e89", "--pptx-logo-color": "#8fb8ff",
+      "--pptx-font-family": "Inter, sans-serif", "--pptx-mono-font-family": "ui-monospace, monospace",
+      "--pptx-background": "#10131a", "--pptx-surface": "#151922", "--pptx-surface-raised": "#1b202a",
+      "--pptx-surface-hover": "#292f3b", "--pptx-border": "#303744", "--pptx-border-soft": "#252b35",
+      "--pptx-topbar-background": "rgb(17 20 27 / 94%)", "--pptx-stage-background": "#10131a",
+      "--pptx-sidebar-background": "#151922", "--pptx-dialog-background": "#151922",
+      "--pptx-slide-background": "#ffffff"
+    }
+  };
+  const applyTheme = (name) => {
+    Object.entries(themes[name]).forEach(([name, value]) => {
+      document.documentElement.style.setProperty(name, value);
+    });
+    document.querySelectorAll(".theme-button").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.theme === name));
+    });
+  };
+  document.querySelectorAll(".theme-button").forEach((button) => {
+    button.addEventListener("click", () => applyTheme(button.dataset.theme));
+  });
+  applyTheme("nature");
+</script>
 </body>
 </html>

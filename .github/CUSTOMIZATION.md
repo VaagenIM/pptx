@@ -50,5 +50,6 @@ Place [`pptx-embed.min.js`](test/pptx-embed.min.js) after the iframe elements:
 ```
 
 The script finds every `.pptx-embed` iframe, reads the variables from the parent page, and
-forwards them to the viewer. This is required for cross-origin embeds because parent-page CSS
-cannot directly style the iframe document.
+forwards them to the viewer. It also watches the parent document root for inline variable
+changes and forwards updates without reloading the iframe. This is required for cross-origin
+embeds because parent-page CSS cannot directly style the iframe document.
