@@ -137,7 +137,8 @@
       const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
       const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
       const viewerBase = "https://pptx.iktim.no/viewer/";
-      const state = { entries: [], path: "", query: "", type: "all" };
+      const rootPath = "powerpoints";
+      const state = { entries: [], path: rootPath, query: "", type: "all" };
       const $ = (id) => document.getElementById(id);
 
       function viewerUrl(rawUrl) {
@@ -172,9 +173,9 @@
         const query = state.query.trim().toLowerCase();
         if (query) {
           return state.entries
-            .filter((entry) => entry.type === "blob" && entry.path.toLowerCase().includes(query))
+            .filter((entry) => entry.type === "blob" && entry.path.startsWith(`${rootPath}/`) && entry.path.toLowerCase().includes(query))
             .filter((entry) => state.type === "all" || fileType(entry.path) === state.type)
-            .map((entry) => ({ path: entry.path, name: entry.path, type: entry.type, size: entry.size }))
+            .map((entry) => ({ path: entry.path, name: entry.path.slice(rootPath.length + 1), type: entry.type, size: entry.size }))
             .sort((a, b) => a.path.localeCompare(b.path));
         }
         const children = new Map();
@@ -206,9 +207,9 @@
       }
 
       function renderBreadcrumbs() {
-        const parts = state.path ? state.path.split("/") : [];
+        const parts = state.path === rootPath ? [] : state.path.slice(rootPath.length + 1).split("/");
         $("breadcrumbs").innerHTML = "";
-        [["Repository", ""]].concat(parts.map((part, index) => [part, parts.slice(0, index + 1).join("/")]))
+        [["PowerPoints", rootPath]].concat(parts.map((part, index) => [part, `${rootPath}/${parts.slice(0, index + 1).join("/")}`]))
           .forEach(([label, path], index, all) => {
             const button = document.createElement("button");
             button.type = "button";
@@ -350,7 +351,7 @@
           if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
           state.entries = (data.tree || [])
             .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry));
-          state.path = "";
+          state.path = rootPath;
           render();
           setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);
         } catch (error) {

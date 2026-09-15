@@ -37,13 +37,13 @@ jobs:
         run: npm test --prefix .github/viewer
       - name: Set Pages base path
         run: |
-          sed -i "s#base: '/pptx-web/'#base: '/pptx/viewer/'#" .github/viewer/vite.config.js
+          sed -i "s#base: '/pptx-web/'#base: '/viewer/'#" .github/viewer/vite.config.js
       - name: Apply viewer overrides
         run: |
           cat .github/viewer-overrides.css >> .github/viewer/src/styles.css
           cat .github/viewer-overrides.js >> .github/viewer/src/main.js
       - name: Build viewer
-        run: npm run build --prefix .github/viewer -- --base=/pptx/viewer/
+        run: npm run build --prefix .github/viewer -- --base=/viewer/
       - name: Add viewer to Pages artifact
         run: |
           rm -rf .github/docs/viewer
