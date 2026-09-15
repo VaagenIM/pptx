@@ -78,12 +78,11 @@
     .icon { display: inline-block; width: 1.5rem; }
     .meta { color: var(--muted); font-size: .9rem; }
     .details { margin-top: 1rem; padding: 1rem; }
-    .embed-panel { margin-top: 1rem; padding: 1rem; }
-    .embed-panel textarea { display: block; font: 0.85rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin: .75rem 0; min-height: 4.5rem; padding: .6rem; resize: vertical; width: 100%; }
+    .shortcuts { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
     code { background: var(--code); border-radius: 4px; padding: .15rem .3rem; }
     footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; }
     body.embed-mode main { max-width: 900px; padding: 1rem; }
-    body.embed-mode h1, body.embed-mode .subtitle, body.embed-mode .embed-panel, body.embed-mode footer { display: none; }
+    body.embed-mode h1, body.embed-mode .subtitle, body.embed-mode footer { display: none; }
     @media (max-width: 600px) {
       .row { grid-template-columns: minmax(0, 1fr) auto; }
       .row .meta { display: none; }
@@ -104,11 +103,6 @@
       </select>
       <button id="refresh" class="primary" type="button">Refresh</button>
     </section>
-    <section class="embed-panel toolbar" aria-label="Embed this file browser">
-      <div><strong>Embed this browser</strong><br><span class="meta">Add the repository browser to another website.</span></div>
-      <textarea id="embed-code" readonly aria-label="Embed code"></textarea>
-      <button id="copy-embed" type="button">Copy embed code</button>
-    </section>
     <div id="status" class="status" role="status">Loading repository files…</div>
     <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
     <section id="files" class="file-list" aria-live="polite"></section>
@@ -123,9 +117,6 @@
       const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
       const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
       const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
-      const siteUrl = new URL(window.location.href);
-      siteUrl.search = "?embed=1";
-      siteUrl.hash = "";
       const state = { entries: [], path: "", query: "", type: "all" };
       const $ = (id) => document.getElementById(id);
 
@@ -140,7 +131,9 @@
       }
 
       function isPublicEntry(entry) {
+        const name = entry.path.split("/").pop().toLowerCase();
         return entry.path !== "docs" && entry.path !== ".github" &&
+          name !== "readme.md" && name !== ".gitignore" &&
           !entry.path.startsWith("docs/") && !entry.path.startsWith(".github/");
       }
 
@@ -215,6 +208,16 @@
         const copyUrl = document.createElement("button");
         copyUrl.textContent = "Copy raw URL";
         copyUrl.onclick = () => copy(rawUrl, copyUrl);
+        const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
+        let officeUrl;
+        if (isPowerPoint) {
+          officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+          const copyEmbed = document.createElement("button");
+          copyEmbed.textContent = "Copy embed code";
+          copyEmbed.style.marginLeft = ".5rem";
+          copyEmbed.onclick = () => copy(`<iframe class="pptx-embed" src="${officeUrl}" frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
+          $("details").append(copyEmbed);
+        }
         const open = document.createElement("a");
         open.href = githubUrl;
         open.target = "_blank";
@@ -222,8 +225,7 @@
         open.textContent = "View on GitHub";
         open.style.marginLeft = ".5rem";
         $("details").append(copyPath, " ", copyUrl, " ", open);
-        if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
-          const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+        if (isPowerPoint) {
           const viewOnline = document.createElement("a");
           viewOnline.href = officeUrl;
           viewOnline.target = "_blank";
@@ -231,11 +233,6 @@
           viewOnline.textContent = "View online";
           viewOnline.style.marginLeft = ".5rem";
           $("details").append(viewOnline);
-          const copyEmbed = document.createElement("button");
-          copyEmbed.textContent = "Copy embed code";
-          copyEmbed.style.marginLeft = ".5rem";
-          copyEmbed.onclick = () => copy(`<iframe src="${officeUrl}" width="960" height="569" frameborder="0" title="${entry.name}"></iframe>`, copyEmbed);
-          $("details").append(copyEmbed);
         }
       }
 
@@ -261,17 +258,32 @@
           const meta = document.createElement("span");
           meta.className = "meta";
           meta.textContent = formatSize(entry.size);
-          row.append(name, meta);
+          const shortcuts = document.createElement("div");
+          shortcuts.className = "shortcuts";
+          const copyPath = document.createElement("button");
+          copyPath.type = "button";
+          copyPath.textContent = "Copy";
+          copyPath.onclick = () => copy(entry.path, copyPath);
+          shortcuts.append(copyPath);
           if (entry.type !== "tree") {
             const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
             const action = document.createElement("a");
             action.href = rawUrl;
             action.download = entry.name;
             action.textContent = "Download";
-            row.append(action);
+            shortcuts.append(action);
+            if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
+              const viewOnline = document.createElement("a");
+              viewOnline.href = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+              viewOnline.target = "_blank";
+              viewOnline.rel = "noopener";
+              viewOnline.textContent = "View online";
+              shortcuts.append(viewOnline);
+            }
           } else {
-            row.append(document.createElement("span"));
+            shortcuts.append(document.createElement("span"));
           }
+          row.append(name, meta, shortcuts);
           $("files").append(row);
         });
       }
@@ -297,8 +309,6 @@
       $("search").oninput = (event) => { state.query = event.target.value; render(); };
       $("type").onchange = (event) => { state.type = event.target.value; render(); };
       $("refresh").onclick = load;
-      $("embed-code").value = `<iframe src="${siteUrl}" width="100%" height="700" frameborder="0" title="Public PowerPoints"></iframe>`;
-      $("copy-embed").onclick = () => copy($("embed-code").value, $("copy-embed"));
       if (new URLSearchParams(window.location.search).get("embed") === "1") document.body.classList.add("embed-mode");
       load();
     })();
