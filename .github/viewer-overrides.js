@@ -64,10 +64,9 @@ if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
   const collapseSidebar = () => {
     if (
       !elements.app.classList.contains('is-empty') &&
-      !elements.app.classList.contains('sidebar-closed') &&
-      !elements.sidebarToggle.disabled
+      !elements.app.classList.contains('sidebar-closed')
     ) {
-      elements.sidebarToggle.click();
+      elements.app.classList.add('sidebar-closed');
     }
   };
   const sidebarObserver = new MutationObserver(collapseSidebar);

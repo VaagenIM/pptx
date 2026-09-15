@@ -83,7 +83,11 @@
     .text-action { border: 0; color: var(--accent); padding: .2rem; text-decoration: underline; }
     dialog { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); max-width: min(680px, calc(100% - 2rem)); padding: 1.25rem; width: 100%; }
     dialog::backdrop { backdrop-filter: blur(5px); background: rgb(0 0 0 / 35%); }
-    dialog textarea { background: var(--code); border: 1px solid var(--border); border-radius: 6px; color: var(--text); display: block; font: .85rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin: .75rem 0; min-height: 7rem; padding: .6rem; resize: vertical; width: 100%; }
+    .code-preview { background: var(--code); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: copy; display: block; font: .85rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin: .75rem 0; overflow-x: auto; padding: .6rem; white-space: nowrap; }
+    .code-preview:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .code-tag { color: #cf222e; }
+    .code-attribute { color: #8250df; }
+    .code-value { color: #0a7b52; }
     .modal-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
     code { background: var(--code); border-radius: 4px; padding: .15rem .3rem; }
     footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; }
@@ -116,8 +120,7 @@
     <dialog id="copy-modal" aria-labelledby="copy-modal-title">
       <h2 id="copy-modal-title">Copy file</h2>
       <p id="copy-modal-path" class="meta"></p>
-      <label for="copy-preview">Embed code preview</label>
-      <textarea id="copy-preview" readonly></textarea>
+      <code id="copy-preview" class="code-preview" tabindex="0" title="Click to copy"></code>
       <div class="modal-actions">
         <button id="copy-url" type="button">Copy URL</button>
         <button id="copy-embed-code" type="button">Copy embed code</button>
@@ -222,6 +225,8 @@
       }
 
       function copy(text, button) {
+        const isPreview = button.classList?.contains("code-preview");
+        const originalMarkup = isPreview ? button.innerHTML : "";
         if (!button.dataset.copyWidth) {
           button.dataset.copyWidth = `${button.getBoundingClientRect().width}px`;
           button.style.minWidth = button.dataset.copyWidth;
@@ -229,8 +234,24 @@
         navigator.clipboard.writeText(text).then(() => {
           const original = button.textContent;
           button.textContent = "Copied";
-          setTimeout(() => { button.textContent = original; }, 1200);
+          setTimeout(() => {
+            if (isPreview) button.innerHTML = originalMarkup;
+            else button.textContent = original;
+          }, 1200);
         }).catch(() => setStatus("Unable to copy to the clipboard.", true));
+      }
+
+      function highlightCode(source) {
+        const escaped = source.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        return escaped.split(/(&lt;\/?iframe|(?:class|src|width|height|allow|allowfullscreen|frameborder|title)(?==)|&quot;[^&]*&quot;)/g)
+          .map((token) => {
+            if (token.startsWith("&lt;")) return `<span class="code-tag">${token}</span>`;
+            if (/^(class|src|width|height|allow|allowfullscreen|frameborder|title)$/.test(token)) {
+              return `<span class="code-attribute">${token}</span>`;
+            }
+            if (token.startsWith("&quot;")) return `<span class="code-value">${token}</span>`;
+            return token;
+          }).join("");
       }
 
       function openCopyModal(entry) {
@@ -243,8 +264,16 @@
           ? `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`
           : "";
         $("copy-modal-path").textContent = entry.path;
-        $("copy-preview").value = embedCode || fileUrl;
-        $("copy-preview").previousElementSibling.textContent = embedCode ? "Embed code preview" : "URL preview";
+        const preview = $("copy-preview");
+        const previewText = embedCode || fileUrl;
+        preview.innerHTML = highlightCode(previewText);
+        preview.onclick = () => copy(previewText, preview);
+        preview.onkeydown = (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            copy(previewText, preview);
+          }
+        };
         $("copy-url").onclick = () => copy(fileUrl, $("copy-url"));
         $("copy-embed-code").hidden = !isPowerPoint;
         $("copy-embed-code").onclick = () => copy(embedCode, $("copy-embed-code"));
