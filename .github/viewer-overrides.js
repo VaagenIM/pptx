@@ -78,6 +78,7 @@ if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
 
 let fullscreenZoom;
 let fullscreenFitMode;
+let fullscreenOperation = 0;
 let boundViewer = null;
 
 const syncFullscreenSlide = () => {
@@ -94,37 +95,37 @@ const bindViewerEvents = () => {
   viewer.addEventListener('slidechange', syncFullscreenSlide);
 };
 
-const fitFullscreenSlide = async () => {
+const enterFullscreenFit = async () => {
   if (!viewer || document.fullscreenElement !== elements.stage) return;
+  const operation = ++fullscreenOperation;
   const frameWidth = Math.min(elements.stage.clientWidth, elements.stage.clientHeight * (16 / 9));
   const frameHeight = frameWidth * (9 / 16);
   const slideScale = Math.min(frameWidth / viewer.slideWidth, frameHeight / viewer.slideHeight);
   await viewer.setFitMode('none');
+  if (operation !== fullscreenOperation || document.fullscreenElement !== elements.stage) return;
   await viewer.setZoom(slideScale * 100);
+  if (operation !== fullscreenOperation || document.fullscreenElement !== elements.stage) return;
   syncFullscreenSlide();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  const activeSlide = document.querySelector('.pptx-fullscreen-slide > div > *');
-  if (!activeSlide) return;
-  const rendered = activeSlide.getBoundingClientRect();
-  const correction = Math.min(frameWidth / rendered.width, frameHeight / rendered.height);
-  if (Number.isFinite(correction) && Math.abs(correction - 1) > 0.001) {
-    await viewer.setZoom(viewer.zoomPercent * correction);
-  }
 };
 
 document.addEventListener('fullscreenchange', () => {
   if (!viewer) return;
+  fullscreenOperation += 1;
   bindViewerEvents();
   if (document.fullscreenElement === elements.stage) {
     fullscreenZoom = viewer.zoomPercent;
     fullscreenFitMode = viewer.fitMode;
     requestAnimationFrame(() => {
       syncFullscreenSlide();
-      void fitFullscreenSlide();
+      void enterFullscreenFit();
     });
   } else if (fullscreenZoom !== undefined) {
     document.querySelectorAll('.pptx-fullscreen-slide').forEach((item) => item.classList.remove('pptx-fullscreen-slide'));
-    void viewer.setFitMode(fullscreenFitMode ?? 'contain').then(() => viewer.setZoom(fullscreenZoom));
+    const operation = fullscreenOperation;
+    void viewer.setFitMode(fullscreenFitMode ?? 'contain').then(() => {
+      if (operation === fullscreenOperation) return viewer.setZoom(fullscreenZoom);
+      return undefined;
+    });
     fullscreenZoom = undefined;
     fullscreenFitMode = undefined;
   }
