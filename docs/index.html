@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse and download the public PowerPoint files in the VaagenIM/pptx repository.">
+  <title>Public PowerPoints</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f8fa;
+      --panel: #fff;
+      --text: #1f2328;
+      --muted: #656d76;
+      --border: #d0d7de;
+      --accent: #0969da;
+      --accent-contrast: #fff;
+      --code: #f0f3f6;
+      --error: #cf222e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --border: #30363d;
+        --accent: #58a6ff;
+        --code: #21262d;
+        --error: #ff7b72;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { margin: 0 auto; max-width: 1100px; padding: 2rem 1rem 4rem; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+    a { color: var(--accent); }
+    .subtitle { color: var(--muted); margin: .35rem 0 1.5rem; }
+    .toolbar, .file-list, .details {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .75rem; padding: 1rem; }
+    input, select, button {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      padding: .55rem .7rem;
+    }
+    input { flex: 1 1 260px; }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+    .status { color: var(--muted); margin: 1rem 0 .75rem; }
+    .error { color: var(--error); }
+    .breadcrumbs { display: flex; flex-wrap: wrap; gap: .25rem; margin: 1rem 0; }
+    .breadcrumbs button { border: 0; padding: .15rem .3rem; }
+    .file-list { overflow: hidden; }
+    .row {
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: .75rem;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      padding: .8rem 1rem;
+    }
+    .row:last-child { border-bottom: 0; }
+    .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .name button { border: 0; padding: 0; text-align: left; }
+    .icon { display: inline-block; width: 1.5rem; }
+    .meta { color: var(--muted); font-size: .9rem; }
+    .details { margin-top: 1rem; padding: 1rem; }
+    code { background: var(--code); border-radius: 4px; padding: .15rem .3rem; }
+    footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; }
+    @media (max-width: 600px) {
+      .row { grid-template-columns: minmax(0, 1fr) auto; }
+      .row .meta { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Public PowerPoints</h1>
+    <p class="subtitle">Browse every file in <a id="repo-link" href="https://github.com/VaagenIM/pptx">VaagenIM/pptx</a>.</p>
+    <section class="toolbar" aria-label="File filters">
+      <input id="search" type="search" placeholder="Search files and folders…" aria-label="Search files and folders">
+      <select id="type" aria-label="Filter by file type">
+        <option value="all">All file types</option>
+        <option value="pptx">PowerPoint (.pptx)</option>
+        <option value="ppt">PowerPoint (.ppt)</option>
+        <option value="other">Other files</option>
+      </select>
+      <button id="refresh" class="primary" type="button">Refresh</button>
+    </section>
+    <div id="status" class="status" role="status">Loading repository files…</div>
+    <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
+    <section id="files" class="file-list" aria-live="polite"></section>
+    <section id="details" class="details" hidden></section>
+    <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.</footer>
+  </main>
+  <script>
+    (() => {
+      const owner = "VaagenIM";
+      const repo = "pptx";
+      const branch = "main";
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+      const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+      const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
+      const state = { entries: [], path: "", query: "", type: "all" };
+      const $ = (id) => document.getElementById(id);
+
+      function setStatus(message, error = false) {
+        $("status").textContent = message;
+        $("status").className = error ? "status error" : "status";
+      }
+
+      function fileType(path) {
+        const extension = path.split(".").pop().toLowerCase();
+        return extension === "pptx" || extension === "ppt" ? extension : "other";
+      }
+
+      function visibleEntries() {
+        const prefix = state.path ? `${state.path}/` : "";
+        const query = state.query.trim().toLowerCase();
+        if (query) {
+          return state.entries
+            .filter((entry) => entry.type === "blob" && entry.path.toLowerCase().includes(query))
+            .filter((entry) => state.type === "all" || fileType(entry.path) === state.type)
+            .map((entry) => ({ path: entry.path, name: entry.path, type: entry.type, size: entry.size }))
+            .sort((a, b) => a.path.localeCompare(b.path));
+        }
+        const children = new Map();
+        state.entries.forEach((entry) => {
+          if (!entry.path.startsWith(prefix)) return;
+          const remainder = entry.path.slice(prefix.length);
+          if (!remainder) return;
+          const [name] = remainder.split("/");
+          const childPath = prefix + name;
+          if (!children.has(childPath)) {
+            children.set(childPath, {
+              path: childPath,
+              name,
+              type: remainder.includes("/") ? "tree" : entry.type,
+              size: remainder.includes("/") ? null : entry.size
+            });
+          }
+        });
+        return [...children.values()]
+          .filter((entry) => entry.type === "tree" || state.type === "all" || fileType(entry.path) === state.type)
+          .sort((a, b) => (a.type !== b.type ? (a.type === "tree" ? -1 : 1) : a.name.localeCompare(b.name)));
+      }
+
+      function formatSize(bytes) {
+        if (bytes == null) return "Folder";
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+
+      function renderBreadcrumbs() {
+        const parts = state.path ? state.path.split("/") : [];
+        $("breadcrumbs").innerHTML = "";
+        [["Repository", ""]].concat(parts.map((part, index) => [part, parts.slice(0, index + 1).join("/")]))
+          .forEach(([label, path], index, all) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = label;
+            button.onclick = () => { state.path = path; render(); };
+            $("breadcrumbs").append(button);
+            if (index < all.length - 1) $("breadcrumbs").append(document.createTextNode(" / "));
+          });
+      }
+
+      function copy(text, button) {
+        navigator.clipboard.writeText(text).then(() => {
+          const original = button.textContent;
+          button.textContent = "Copied";
+          setTimeout(() => { button.textContent = original; }, 1200);
+        }).catch(() => setStatus("Unable to copy to the clipboard.", true));
+      }
+
+      function renderDetails(entry) {
+        const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+        const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
+        $("details").hidden = false;
+        $("details").innerHTML = `<strong>${entry.path}</strong><p class="meta">${formatSize(entry.size)}</p>`;
+        const copyPath = document.createElement("button");
+        copyPath.textContent = "Copy path";
+        copyPath.onclick = () => copy(entry.path, copyPath);
+        const copyUrl = document.createElement("button");
+        copyUrl.textContent = "Copy raw URL";
+        copyUrl.onclick = () => copy(rawUrl, copyUrl);
+        const open = document.createElement("a");
+        open.href = githubUrl;
+        open.target = "_blank";
+        open.rel = "noopener";
+        open.textContent = "View on GitHub";
+        open.style.marginLeft = ".5rem";
+        $("details").append(copyPath, " ", copyUrl, " ", open);
+      }
+
+      function render() {
+        renderBreadcrumbs();
+        const entries = visibleEntries();
+        $("files").innerHTML = "";
+        $("details").hidden = true;
+        if (!entries.length) {
+          $("files").textContent = "No matching files or folders.";
+          return;
+        }
+        entries.forEach((entry) => {
+          const row = document.createElement("div");
+          row.className = "row";
+          const name = document.createElement("div");
+          name.className = "name";
+          const button = document.createElement("button");
+          button.type = "button";
+          button.innerHTML = `<span class="icon">${entry.type === "tree" ? "📁" : "📄"}</span>${entry.name}`;
+          button.onclick = () => entry.type === "tree" ? (state.path = entry.path, render()) : renderDetails(entry);
+          name.append(button);
+          const meta = document.createElement("span");
+          meta.className = "meta";
+          meta.textContent = formatSize(entry.size);
+          row.append(name, meta);
+          if (entry.type !== "tree") {
+            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            const action = document.createElement("a");
+            action.href = rawUrl;
+            action.download = entry.name;
+            action.textContent = "Download";
+            row.append(action);
+          } else {
+            row.append(document.createElement("span"));
+          }
+          $("files").append(row);
+        });
+      }
+
+      async function load() {
+        setStatus("Loading repository files…");
+        try {
+          const response = await fetch(apiUrl, { headers: { Accept: "application/vnd.github+json" } });
+          if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+          const data = await response.json();
+          if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
+          state.entries = (data.tree || []).filter((entry) => entry.type === "blob" || entry.type === "tree");
+          state.path = "";
+          render();
+          setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);
+        } catch (error) {
+          setStatus(`Could not load repository files: ${error.message}`, true);
+          $("files").textContent = "Try refreshing or browse the repository on GitHub.";
+        }
+      }
+
+      $("search").oninput = (event) => { state.query = event.target.value; render(); };
+      $("type").onchange = (event) => { state.type = event.target.value; render(); };
+      $("refresh").onclick = load;
+      load();
+    })();
+  </script>
+</body>
+</html>
