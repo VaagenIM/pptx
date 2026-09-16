@@ -446,6 +446,7 @@
         const branch = "public";
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
         const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+        const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/`;
         const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
@@ -624,6 +625,11 @@
             copyDownloadButton.type = "button";
             copyDownloadButton.textContent = "Copy download URL";
             copyDownloadButton.onclick = (event) => copy(rawUrl, copyDownloadButton, event, "Copied download URL");
+            const originalDownload = document.createElement("a");
+            originalDownload.href = originalRawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            originalDownload.download = entry.name;
+            originalDownload.rel = "noopener";
+            originalDownload.textContent = "Download original";
             const previewFrame = $("modal-preview");
             previewFrame.replaceChildren();
             if (!isPowerPoint) {
@@ -643,7 +649,7 @@
                     copy(embedCodeFor(entry, rawUrl), embed, event, "Copied embed code");
                 };
                 links.append(embed);
-                links.append(copyViewButton, copyDownloadButton);
+                links.append(copyViewButton, copyDownloadButton, originalDownload);
                 const frame = document.createElement("div");
                 frame.className = "modal-preview-frame";
                 const iframe = document.createElement("iframe");
