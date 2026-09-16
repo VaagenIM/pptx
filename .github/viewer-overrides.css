@@ -122,6 +122,11 @@
   background: var(--pptx-slide-background, #fff) !important;
 }
 
+/* SmartArt blip placeholders are labelled by the viewer override instead. */
+.viewer-container svg path[fill=""][stroke="none"] {
+  fill: transparent !important;
+}
+
 .stage:fullscreen {
   padding: 0;
   background: var(--pptx-fullscreen-background, #08090c);

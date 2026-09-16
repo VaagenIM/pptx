@@ -78,6 +78,71 @@ const getDownloadName = (url) => {
     return 'presentation.pptx';
   }
 };
+const youtubeHosts = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
+const getYoutubeEmbedUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return youtubeHosts.has(url.hostname.toLowerCase()) && url.pathname.startsWith('/embed/') ? url.href : null;
+  } catch {
+    return null;
+  }
+};
+const upgradeYoutubeVideos = (root) => {
+  root.querySelectorAll('video').forEach((video) => {
+    const embedUrl = getYoutubeEmbedUrl(video.currentSrc || video.getAttribute('src') || '');
+    if (!embedUrl) return;
+    const iframe = document.createElement('iframe');
+    iframe.className = video.className;
+    iframe.style.cssText = video.style.cssText;
+    iframe.src = embedUrl;
+    iframe.title = 'YouTube video player';
+    iframe.frameBorder = '0';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.allowFullscreen = true;
+    video.replaceWith(iframe);
+  });
+};
+const markMissingGraphics = (root) => {
+  root.querySelectorAll('svg').forEach((svg) => {
+    if (svg.dataset.missingGraphic || svg.children.length !== 1) return;
+    const placeholder = svg.querySelector(':scope > path[fill=""][stroke="none"]');
+    if (!placeholder) return;
+    const [viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight] = (svg.getAttribute('viewBox') || '0 0 100 100')
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number);
+    const size = Math.min(viewBoxWidth, viewBoxHeight);
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    icon.setAttribute(
+      'transform',
+      `translate(${viewBoxX + viewBoxWidth / 2} ${viewBoxY + viewBoxHeight / 2}) scale(${size / 100}) translate(-50 -50)`,
+    );
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '50');
+    circle.setAttribute('cy', '50');
+    circle.setAttribute('r', '35');
+    const question = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    question.setAttribute('d', 'M35 38C35 27 43 20 54 20C66 20 74 28 74 39C74 49 68 54 59 60C54 63 52 67 52 72');
+    for (const shape of [circle, question]) {
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', '#6b7280');
+      shape.setAttribute('stroke-width', '6');
+      shape.setAttribute('stroke-linecap', 'round');
+      shape.setAttribute('stroke-linejoin', 'round');
+      icon.append(shape);
+    }
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', '52');
+    dot.setAttribute('cy', '84');
+    dot.setAttribute('r', '3');
+    dot.setAttribute('fill', '#6b7280');
+    icon.append(dot);
+    placeholder.setAttribute('fill', 'transparent');
+    svg.append(icon);
+    svg.dataset.missingGraphic = 'true';
+  });
+};
 const syncDownloadButton = () => {
   downloadButton.disabled = elements.app.classList.contains('is-empty') || (!localPresentationFile && !getRemotePresentationUrl());
 };
@@ -183,7 +248,11 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 const viewerObserver = new MutationObserver(() => {
+  upgradeYoutubeVideos(elements.viewerContainer);
+  markMissingGraphics(elements.viewerContainer);
   bindViewerEvents();
   syncFullscreenSlide();
 });
 viewerObserver.observe(elements.viewerContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy'] });
+upgradeYoutubeVideos(elements.viewerContainer);
+markMissingGraphics(elements.viewerContainer);
