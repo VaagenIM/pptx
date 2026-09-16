@@ -29,7 +29,7 @@ jobs:
         run: |
           git fetch origin public || true
           if git show-ref --verify --quiet refs/remotes/origin/public; then
-            git worktree add /tmp/compressed origin/public
+            git worktree add -B public /tmp/compressed origin/public
           else
             mkdir -p /tmp/compressed
             git -C /tmp/compressed init
