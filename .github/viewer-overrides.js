@@ -70,7 +70,7 @@ elements.fileInput.addEventListener('change', (event) => {
   localPresentationFile = event.target.files?.[0] ?? null;
 }, true);
 
-const presentationMapUrl = 'https://raw.githubusercontent.com/VaagenIM/pptx/public/map.json';
+const presentationMapUrl = new URL('/map.json', window.location.href).href;
 const publicPresentationsUrl = 'https://raw.githubusercontent.com/VaagenIM/pptx/public/';
 let resolvedPresentationUrl = null;
 let resolvedPresentationName = null;
@@ -101,7 +101,7 @@ const resolvePresentationForDownload = async () => {
   const directUrl = new URLSearchParams(window.location.search).get('url');
   if (directUrl) return { url: directUrl, name: getDownloadName(directUrl) };
   if (!getPresentationId()) return null;
-  presentationResolution ??= fetch(presentationMapUrl, { credentials: 'omit' })
+  presentationResolution ??= fetch(presentationMapUrl, { cache: 'no-store', credentials: 'omit' })
     .then(async (response) => {
       if (!response.ok) throw new Error(`Presentation map returned HTTP ${response.status}.`);
       const map = await response.json();

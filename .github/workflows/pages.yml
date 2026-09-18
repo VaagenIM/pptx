@@ -3,8 +3,6 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-    paths:
-      - ".github/**"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +25,23 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Generate presentation map
+        run: |
+          git fetch origin public || true
+          if git cat-file -e origin/public:map.json 2>/dev/null; then
+            git show origin/public:map.json > /tmp/previous-map.json
+          else
+            printf '{}\n' > /tmp/previous-map.json
+          fi
+          python .github/tools/generate_map.py \
+            --source powerpoints \
+            --previous-map /tmp/previous-map.json \
+            --output .github/docs/map.json
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:

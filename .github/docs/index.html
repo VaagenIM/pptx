@@ -449,7 +449,7 @@
         const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${publicBranch}/`;
         const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${sourceBranch}/`;
         const githubBase = `https://github.com/${owner}/${repo}/blob/${sourceBranch}/`;
-        const mapUrl = `${rawBase}map.json?v=${Date.now()}`;
+        const mapUrl = new URL("map.json", window.location.href).href;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
         const state = {entries: [], ids: {}, idsByPath: {}, path: rootPath, query: "", type: "all"};
