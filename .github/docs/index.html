@@ -519,7 +519,8 @@
                         path: childPath,
                         name,
                         type: remainder.includes("/") ? "tree" : entry.type,
-                        size: remainder.includes("/") ? null : entry.size
+                        size: remainder.includes("/") ? null : entry.size,
+                        id: remainder.includes("/") ? undefined : entry.id
                     });
                 }
             });
