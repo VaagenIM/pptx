@@ -449,7 +449,7 @@
         const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${publicBranch}/`;
         const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${sourceBranch}/`;
         const githubBase = `https://github.com/${owner}/${repo}/blob/${sourceBranch}/`;
-        const mapUrl = `${rawBase}map.json`;
+        const mapUrl = `${rawBase}map.json?v=${Date.now()}`;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
         const state = {entries: [], ids: {}, idsByPath: {}, path: rootPath, query: "", type: "all"};
@@ -807,8 +807,8 @@
             setStatus("Loading repository files…");
             try {
                 const [response, mapResponse] = await Promise.all([
-                    fetch(apiUrl, {headers: {Accept: "application/vnd.github+json"}}),
-                    fetch(mapUrl, {headers: {Accept: "application/json"}})
+                    fetch(apiUrl, {cache: "no-store", headers: {Accept: "application/vnd.github+json"}}),
+                    fetch(mapUrl, {cache: "no-store", headers: {Accept: "application/json"}})
                 ]);
                 if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
                 if (!mapResponse.ok) throw new Error(`Presentation map returned ${mapResponse.status}`);
