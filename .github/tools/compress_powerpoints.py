@@ -11,6 +11,8 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
+from generate_map import presentation_id
+
 MAX_IMAGE_DIMENSION = 1600
 MAX_IMAGE_PIXELS = 1600 * 900
 REFERENCE_SLIDE_WIDTH = 1920
@@ -121,14 +123,14 @@ def main() -> None:
     parser.add_argument("--force-compress", action="store_true")
     args = parser.parse_args()
     source_paths = {
-        source.relative_to(args.source)
+        Path(f"{presentation_id(source.relative_to(args.source).as_posix())}.pptx")
         for source in args.source.rglob("*.pptx")
     }
     for destination in args.destination.rglob("*.pptx"):
         if destination.relative_to(args.destination) not in source_paths:
             destination.unlink()
     for source in args.source.rglob("*.pptx"):
-        destination = args.destination / source.relative_to(args.source)
+        destination = args.destination / f"{presentation_id(source.relative_to(args.source).as_posix())}.pptx"
         if args.force_compress or not destination.exists():
             optimize_pptx(source, destination)
             print(f"Optimized {source} -> {destination}")

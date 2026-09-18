@@ -457,8 +457,7 @@
 
         function viewerUrl(entry, embedded = true, compact = false) {
             const url = new URL(viewerBase);
-            if (entry.id) url.searchParams.set("id", entry.id);
-            else url.searchParams.set("url", rawUrlFor(entry));
+            url.searchParams.set("id", entry.id);
             url.searchParams.set("embed", embedded ? "1" : "0");
             url.searchParams.set("sidebar", embedded ? "0" : "1");
             if (compact) url.searchParams.set("compact", "1");
@@ -466,6 +465,9 @@
         }
 
         function rawUrlFor(entry) {
+            if (fileType(entry.path) === "pptx") {
+                return `${rawBase}powerpoints/${entry.id}.pptx`;
+            }
             return rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
         }
 

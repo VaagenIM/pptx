@@ -78,6 +78,18 @@ let presentationResolution = null;
 
 const getPresentationId = () => new URLSearchParams(window.location.search).get('id');
 const getRemotePresentationUrl = () => new URLSearchParams(window.location.search).get('url') || resolvedPresentationUrl;
+const originalReplaceState = history.replaceState.bind(history);
+history.replaceState = (state, title, url) => {
+  if (url != null && getPresentationId()) {
+    const nextUrl = new URL(url, window.location.href);
+    if (nextUrl.searchParams.has('url')) {
+      nextUrl.searchParams.delete('url');
+      nextUrl.searchParams.set('id', getPresentationId());
+      url = nextUrl.href;
+    }
+  }
+  return originalReplaceState(state, title, url);
+};
 const getDownloadName = (url) => {
   try {
     return decodeURIComponent(new URL(url).pathname.split('/').pop() || 'presentation.pptx');
@@ -97,7 +109,7 @@ const resolvePresentationForDownload = async () => {
       if (typeof path !== 'string' || !path.startsWith('powerpoints/') || !path.endsWith('.pptx')) {
         throw new Error('The presentation ID was not found.');
       }
-      const url = new URL(path, publicPresentationsUrl).href;
+      const url = new URL(`powerpoints/${getPresentationId()}.pptx`, publicPresentationsUrl).href;
       return { url, name: path.split('/').pop() || 'presentation.pptx' };
     });
   const result = await presentationResolution;
@@ -105,6 +117,12 @@ const resolvePresentationForDownload = async () => {
   resolvedPresentationName = result.name;
   syncDownloadButton();
   return result;
+};
+const openMappedPresentation = async () => {
+  if (!getPresentationId() || new URLSearchParams(window.location.search).get('url')) return;
+  const presentation = await resolvePresentationForDownload();
+  elements.urlInput.value = presentation.url;
+  elements.urlForm.requestSubmit();
 };
 const youtubeHosts = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
 const getYoutubeEmbedUrl = (value) => {
@@ -172,6 +190,9 @@ downloadButton.addEventListener('click', async () => {
 const downloadObserver = new MutationObserver(syncDownloadButton);
 downloadObserver.observe(elements.app, { attributes: true, attributeFilter: ['class'] });
 syncDownloadButton();
+openMappedPresentation().catch((error) => {
+  elements.status.textContent = `Could not resolve presentation ID. ${error.message}`;
+});
 
 if (['0', 'false', 'hidden'].includes(viewerParams.get('sidebar'))) {
   const collapseSidebar = () => {
