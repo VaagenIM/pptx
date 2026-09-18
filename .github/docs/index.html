@@ -452,12 +452,14 @@
         const mapUrl = `${rawBase}map.json`;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
-        const state = {entries: [], ids: {}, path: rootPath, query: "", type: "all"};
+        const state = {entries: [], ids: {}, idsByPath: {}, path: rootPath, query: "", type: "all"};
         const $ = (id) => document.getElementById(id);
 
         function viewerUrl(entry, embedded = true, compact = false) {
             const url = new URL(viewerBase);
-            url.searchParams.set("id", entry.id);
+            const id = entry.id || idForPath(entry.path);
+            if (id) url.searchParams.set("id", id);
+            else url.searchParams.set("url", rawUrlFor(entry));
             url.searchParams.set("embed", embedded ? "1" : "0");
             url.searchParams.set("sidebar", embedded ? "0" : "1");
             if (compact) url.searchParams.set("compact", "1");
@@ -466,9 +468,14 @@
 
         function rawUrlFor(entry) {
             if (fileType(entry.path) === "pptx") {
-                return `${rawBase}powerpoints/${entry.id}.pptx`;
+                const id = entry.id || idForPath(entry.path);
+                if (id) return `${rawBase}powerpoints/${id}.pptx`;
             }
-            return rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            return originalRawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+        }
+
+        function idForPath(path) {
+            return state.idsByPath[path];
         }
 
         function setStatus(message, error = false) {
@@ -520,7 +527,7 @@
                         name,
                         type: remainder.includes("/") ? "tree" : entry.type,
                         size: remainder.includes("/") ? null : entry.size,
-                        id: remainder.includes("/") ? undefined : entry.id
+                        id: remainder.includes("/") ? idForPath(childPath) : (entry.id || idForPath(entry.path))
                     });
                 }
             });
@@ -802,10 +809,11 @@
                 if (!mapResponse.ok) throw new Error(`Presentation map returned ${mapResponse.status}`);
                 const data = await response.json();
                 state.ids = await mapResponse.json();
+                state.idsByPath = Object.fromEntries(Object.entries(state.ids).map(([id, path]) => [path, id]));
                 if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
                 state.entries = (data.tree || [])
                     .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry))
-                    .map((entry) => ({...entry, id: Object.entries(state.ids).find(([, path]) => path === entry.path)?.[0]}));
+                    .map((entry) => ({...entry, id: idForPath(entry.path)}));
                 state.path = rootPath;
                 render();
                 setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);
