@@ -443,23 +443,30 @@
     (() => {
         const owner = "VaagenIM";
         const repo = "pptx";
-        const branch = "public";
-        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-        const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
-        const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/`;
-        const githubBase = `https://github.com/${owner}/${repo}/blob/${branch}/`;
+        const sourceBranch = "main";
+        const publicBranch = "public";
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${sourceBranch}?recursive=1`;
+        const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${publicBranch}/`;
+        const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${sourceBranch}/`;
+        const githubBase = `https://github.com/${owner}/${repo}/blob/${sourceBranch}/`;
+        const mapUrl = `${rawBase}map.json`;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
-        const state = {entries: [], path: rootPath, query: "", type: "all"};
+        const state = {entries: [], ids: {}, path: rootPath, query: "", type: "all"};
         const $ = (id) => document.getElementById(id);
 
-        function viewerUrl(rawUrl, embedded = true, compact = false) {
+        function viewerUrl(entry, embedded = true, compact = false) {
             const url = new URL(viewerBase);
-            url.searchParams.set("url", rawUrl);
+            if (entry.id) url.searchParams.set("id", entry.id);
+            else url.searchParams.set("url", rawUrlFor(entry));
             url.searchParams.set("embed", embedded ? "1" : "0");
             url.searchParams.set("sidebar", embedded ? "0" : "1");
             if (compact) url.searchParams.set("compact", "1");
             return url.href;
+        }
+
+        function rawUrlFor(entry) {
+            return rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
         }
 
         function setStatus(message, error = false) {
@@ -493,7 +500,8 @@
                         path: entry.path,
                         name: entry.path.slice(rootPath.length + 1),
                         type: entry.type,
-                        size: entry.size
+                        size: entry.size,
+                        id: entry.id
                     }))
                     .sort((a, b) => a.path.localeCompare(b.path));
             }
@@ -566,11 +574,11 @@
             }).catch(() => setStatus("Unable to copy to the clipboard.", true));
         }
 
-        function embedCodeFor(entry, rawUrl) {
-            return `<iframe class="pptx-embed" src="${viewerUrl(rawUrl)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`;
+        function embedCodeFor(entry) {
+            return `<iframe class="pptx-embed" src="${viewerUrl(entry)}" width="960" height="569" allow="fullscreen" allowfullscreen frameborder="0" title="${entry.name}"></iframe>`;
         }
 
-        function createEmbedAction(entry, rawUrl) {
+        function createEmbedAction(entry) {
             const action = document.createElement("a");
             action.href = "#";
             action.className = "embed-action";
@@ -579,7 +587,7 @@
             action.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7-5 5 5 5M15 7l5 5-5 5"></path></svg>`;
             action.onclick = (event) => {
                 event.preventDefault();
-                copy(embedCodeFor(entry, rawUrl), action, event, "Copied embed code");
+                copy(embedCodeFor(entry), action, event, "Copied embed code");
             };
             return action;
         }
@@ -589,7 +597,7 @@
             action.href = "#";
             action.className = "icon-action";
             const copyUrl = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt"
-                ? viewerUrl(rawUrl, false)
+                ? viewerUrl(entry, false)
                 : rawUrl;
             action.setAttribute("title", "Copy view URL");
             action.setAttribute("aria-label", "Copy view URL");
@@ -604,7 +612,7 @@
         function openCopyModal(entry) {
             const modal = $("copy-modal");
             if (modal.open) modal.close();
-            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            const rawUrl = rawUrlFor(entry);
             const fileUrl = entry.type === "tree"
                 ? githubBase + entry.path.split("/").map(encodeURIComponent).join("/")
                 : rawUrl;
@@ -620,7 +628,7 @@
             const copyViewButton = document.createElement("button");
             copyViewButton.type = "button";
             copyViewButton.textContent = "Copy URL";
-            copyViewButton.onclick = (event) => copy(isPowerPoint ? viewerUrl(rawUrl, false) : fileUrl, copyViewButton, event, "Copied URL");
+            copyViewButton.onclick = (event) => copy(isPowerPoint ? viewerUrl(entry, false) : fileUrl, copyViewButton, event, "Copied URL");
             const copyDownloadButton = document.createElement("button");
             copyDownloadButton.type = "button";
             copyDownloadButton.textContent = "Copy download URL";
@@ -646,7 +654,7 @@
                 embed.textContent = "Copy embed code";
                 embed.onclick = (event) => {
                     event.preventDefault();
-                    copy(embedCodeFor(entry, rawUrl), embed, event, "Copied embed code");
+                    copy(embedCodeFor(entry), embed, event, "Copied embed code");
                 };
                 links.append(embed);
                 links.append(copyViewButton, copyDownloadButton, originalDownload);
@@ -654,7 +662,7 @@
                 frame.className = "modal-preview-frame";
                 const iframe = document.createElement("iframe");
                 iframe.className = "modal-preview";
-                iframe.src = viewerUrl(rawUrl, true, true);
+                iframe.src = viewerUrl(entry, true, true);
                 iframe.allow = "fullscreen";
                 iframe.allowFullscreen = true;
                 iframe.title = `${entry.name} preview`;
@@ -663,7 +671,7 @@
             }
             if (isPowerPoint) {
                 const view = document.createElement("a");
-                view.href = viewerUrl(rawUrl, false);
+                view.href = viewerUrl(entry, false);
                 view.target = "_blank";
                 view.rel = "noopener";
                 view.textContent = "View";
@@ -673,7 +681,7 @@
         }
 
         function renderDetails(entry) {
-            const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            const rawUrl = rawUrlFor(entry);
             const githubUrl = githubBase + entry.path.split("/").map(encodeURIComponent).join("/");
             $("details").hidden = false;
             $("details").innerHTML = `<strong>${entry.path}</strong><p class="meta">${formatSize(entry.size)}</p>`;
@@ -686,11 +694,11 @@
             const isPowerPoint = fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt";
             let presentationUrl;
             if (isPowerPoint) {
-                presentationUrl = viewerUrl(rawUrl, false);
+                presentationUrl = viewerUrl(entry, false);
                 const copyEmbed = document.createElement("button");
                 copyEmbed.textContent = "Copy embed code";
                 copyEmbed.style.marginLeft = ".5rem";
-                copyEmbed.onclick = () => copy(embedCodeFor(entry, rawUrl), copyEmbed);
+                copyEmbed.onclick = () => copy(embedCodeFor(entry), copyEmbed);
                 $("details").append(copyEmbed);
             }
             const open = document.createElement("a");
@@ -746,9 +754,9 @@
                     openCopyModal(entry);
                 };
                 if (entry.type !== "tree") {
-                    const rawUrl = rawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+                    const rawUrl = rawUrlFor(entry);
                     if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
-                        shortcuts.append(createEmbedAction(entry, rawUrl));
+                        shortcuts.append(createEmbedAction(entry));
                     }
                     shortcuts.append(createCopyAction(entry, rawUrl));
                     const action = document.createElement("a");
@@ -761,7 +769,7 @@
                     shortcuts.append(action);
                     if (fileType(entry.path) === "pptx" || fileType(entry.path) === "ppt") {
                         const viewOnline = document.createElement("a");
-                        viewOnline.href = viewerUrl(rawUrl, false);
+                        viewOnline.href = viewerUrl(entry, false);
                         viewOnline.target = "_blank";
                         viewOnline.rel = "noopener";
                         viewOnline.className = "icon-action";
@@ -783,12 +791,18 @@
         async function load() {
             setStatus("Loading repository files…");
             try {
-                const response = await fetch(apiUrl, {headers: {Accept: "application/vnd.github+json"}});
+                const [response, mapResponse] = await Promise.all([
+                    fetch(apiUrl, {headers: {Accept: "application/vnd.github+json"}}),
+                    fetch(mapUrl, {headers: {Accept: "application/json"}})
+                ]);
                 if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+                if (!mapResponse.ok) throw new Error(`Presentation map returned ${mapResponse.status}`);
                 const data = await response.json();
+                state.ids = await mapResponse.json();
                 if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
                 state.entries = (data.tree || [])
-                    .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry));
+                    .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry))
+                    .map((entry) => ({...entry, id: Object.entries(state.ids).find(([, path]) => path === entry.path)?.[0]}));
                 state.path = rootPath;
                 render();
                 setStatus(`${state.entries.filter((entry) => entry.type === "blob").length} files indexed`);

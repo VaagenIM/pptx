@@ -70,13 +70,41 @@ elements.fileInput.addEventListener('change', (event) => {
   localPresentationFile = event.target.files?.[0] ?? null;
 }, true);
 
-const getRemotePresentationUrl = () => new URLSearchParams(window.location.search).get('url');
+const presentationMapUrl = 'https://raw.githubusercontent.com/VaagenIM/pptx/public/map.json';
+const publicPresentationsUrl = 'https://raw.githubusercontent.com/VaagenIM/pptx/public/';
+let resolvedPresentationUrl = null;
+let resolvedPresentationName = null;
+let presentationResolution = null;
+
+const getPresentationId = () => new URLSearchParams(window.location.search).get('id');
+const getRemotePresentationUrl = () => new URLSearchParams(window.location.search).get('url') || resolvedPresentationUrl;
 const getDownloadName = (url) => {
   try {
     return decodeURIComponent(new URL(url).pathname.split('/').pop() || 'presentation.pptx');
   } catch {
     return 'presentation.pptx';
   }
+};
+const resolvePresentationForDownload = async () => {
+  const directUrl = new URLSearchParams(window.location.search).get('url');
+  if (directUrl) return { url: directUrl, name: getDownloadName(directUrl) };
+  if (!getPresentationId()) return null;
+  presentationResolution ??= fetch(presentationMapUrl, { credentials: 'omit' })
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`Presentation map returned HTTP ${response.status}.`);
+      const map = await response.json();
+      const path = map[getPresentationId()];
+      if (typeof path !== 'string' || !path.startsWith('powerpoints/') || !path.endsWith('.pptx')) {
+        throw new Error('The presentation ID was not found.');
+      }
+      const url = new URL(path, publicPresentationsUrl).href;
+      return { url, name: path.split('/').pop() || 'presentation.pptx' };
+    });
+  const result = await presentationResolution;
+  resolvedPresentationUrl = result.url;
+  resolvedPresentationName = result.name;
+  syncDownloadButton();
+  return result;
 };
 const youtubeHosts = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
 const getYoutubeEmbedUrl = (value) => {
@@ -104,19 +132,24 @@ const upgradeYoutubeVideos = (root) => {
   });
 };
 const syncDownloadButton = () => {
-  downloadButton.disabled = elements.app.classList.contains('is-empty') || (!localPresentationFile && !getRemotePresentationUrl());
+  downloadButton.disabled = elements.app.classList.contains('is-empty')
+    || (!localPresentationFile && (!getRemotePresentationUrl() && !getPresentationId()));
 };
 
 downloadButton.addEventListener('click', async () => {
-  const remoteUrl = getRemotePresentationUrl();
-  const href = localPresentationFile ? URL.createObjectURL(localPresentationFile) : remoteUrl;
-  if (!href) return;
-  const link = document.createElement('a');
-  let objectUrl = localPresentationFile ? href : null;
-  link.href = href;
-  link.download = localPresentationFile?.name || getDownloadName(remoteUrl);
-  link.rel = 'noopener';
+  let objectUrl = null;
+  let remoteUrl = null;
+  let link = null;
   try {
+    const resolved = await resolvePresentationForDownload();
+    remoteUrl = resolved?.url || getRemotePresentationUrl();
+    const href = localPresentationFile ? URL.createObjectURL(localPresentationFile) : remoteUrl;
+    if (!href) return;
+    link = document.createElement('a');
+    objectUrl = localPresentationFile ? href : null;
+    link.href = href;
+    link.download = localPresentationFile?.name || resolved?.name || resolvedPresentationName || getDownloadName(remoteUrl);
+    link.rel = 'noopener';
     if (remoteUrl && !localPresentationFile) {
       const response = await fetch(remoteUrl, { credentials: 'omit' });
       if (!response.ok) throw new Error(`Download returned HTTP ${response.status}.`);
@@ -125,10 +158,12 @@ downloadButton.addEventListener('click', async () => {
     }
     link.click();
   } catch (error) {
-    link.href = remoteUrl;
-    link.removeAttribute('download');
+    if (link && remoteUrl) {
+      link.href = remoteUrl;
+      link.removeAttribute('download');
+      link.click();
+    }
     elements.status.textContent = `Direct download unavailable; opening the source URL. ${error.message}`;
-    link.click();
   } finally {
     if (objectUrl) window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }

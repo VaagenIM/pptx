@@ -1,4 +1,4 @@
-"""Add optimized copies of newly added PPTX files to a separate branch."""
+"""Synchronize optimized PPTX files to a separate branch."""
 
 from __future__ import annotations
 
@@ -120,6 +120,13 @@ def main() -> None:
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--force-compress", action="store_true")
     args = parser.parse_args()
+    source_paths = {
+        source.relative_to(args.source)
+        for source in args.source.rglob("*.pptx")
+    }
+    for destination in args.destination.rglob("*.pptx"):
+        if destination.relative_to(args.destination) not in source_paths:
+            destination.unlink()
     for source in args.source.rglob("*.pptx"):
         destination = args.destination / source.relative_to(args.source)
         if args.force_compress or not destination.exists():

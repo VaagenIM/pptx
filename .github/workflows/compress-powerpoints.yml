@@ -44,7 +44,7 @@ jobs:
           fi
           git -C /tmp/compressed remote set-url origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
 
-      - name: Compress newly added presentations
+      - name: Synchronize compressed presentations and ID map
         run: |
           if [ "${{ inputs.force_compress }}" = "true" ]; then
             rm -rf /tmp/compressed/powerpoints
@@ -56,12 +56,15 @@ jobs:
             --source powerpoints \
             --destination /tmp/compressed/powerpoints \
             $FORCE_ARGS
+          python .github/tools/generate_map.py \
+            --source powerpoints \
+            --output /tmp/compressed/map.json
 
       - name: Publish compressed branch
         run: |
           git -C /tmp/compressed config user.name "github-actions[bot]"
           git -C /tmp/compressed config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C /tmp/compressed add powerpoints
+          git -C /tmp/compressed add map.json powerpoints
           if git -C /tmp/compressed diff --cached --quiet; then
             echo "No new presentations to publish."
             exit 0
