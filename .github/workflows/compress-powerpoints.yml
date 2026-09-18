@@ -52,13 +52,15 @@ jobs:
           else
             FORCE_ARGS=""
           fi
+          python .github/tools/generate_map.py \
+            --source powerpoints \
+            --previous-map /tmp/compressed/map.json \
+            --output /tmp/compressed/map.json
           python .github/tools/compress_powerpoints.py \
             --source powerpoints \
             --destination /tmp/compressed/powerpoints \
+            --map /tmp/compressed/map.json \
             $FORCE_ARGS
-          python .github/tools/generate_map.py \
-            --source powerpoints \
-            --output /tmp/compressed/map.json
 
       - name: Publish compressed branch
         run: |

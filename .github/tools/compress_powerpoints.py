@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import posixpath
 import zipfile
 from pathlib import Path
@@ -120,17 +121,26 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
+    parser.add_argument("--map", type=Path)
     parser.add_argument("--force-compress", action="store_true")
     args = parser.parse_args()
+    identifiers = {}
+    if args.map and args.map.exists():
+        identifiers = {
+            path.removeprefix("powerpoints/"): identifier
+            for identifier, path in json.loads(args.map.read_text(encoding="utf-8")).items()
+        }
     source_paths = {
-        Path(f"{presentation_id(source.relative_to(args.source).as_posix())}.pptx")
+        Path(f"{identifiers.get(source.relative_to(args.source).as_posix(), presentation_id(source.relative_to(args.source).as_posix()))}.pptx")
         for source in args.source.rglob("*.pptx")
     }
     for destination in args.destination.rglob("*.pptx"):
         if destination.relative_to(args.destination) not in source_paths:
             destination.unlink()
     for source in args.source.rglob("*.pptx"):
-        destination = args.destination / f"{presentation_id(source.relative_to(args.source).as_posix())}.pptx"
+        path = source.relative_to(args.source).as_posix()
+        identifier = identifiers.get(path, presentation_id(path))
+        destination = args.destination / f"{identifier}.pptx"
         if args.force_compress or not destination.exists():
             optimize_pptx(source, destination)
             print(f"Optimized {source} -> {destination}")

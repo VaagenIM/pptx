@@ -7,7 +7,8 @@ The site provides browsable PowerPoint files and embeddable presentations for us
 PowerPoint embed links use deterministic UUIDv5 IDs. The public branch publishes
 `map.json`, which maps each ID to its source presentation path, while compressed
 files are stored as `powerpoints/<uuid>.pptx`; the directory index reads the
-current file list from `main`.
+current file list from `main`. The publishing workflow carries the map forward
+and uses Git rename history, so moving or renaming a presentation keeps its ID.
 
 See [CUSTOMIZATION.md](CUSTOMIZATION.md) for embedding and customization instructions.
 
