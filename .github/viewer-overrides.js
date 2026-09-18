@@ -115,6 +115,7 @@ const resolvePresentationForDownload = async () => {
   const result = await presentationResolution;
   resolvedPresentationUrl = result.url;
   resolvedPresentationName = result.name;
+  syncPresentationDisplayName();
   syncDownloadButton();
   return result;
 };
@@ -153,6 +154,17 @@ const syncDownloadButton = () => {
   downloadButton.disabled = elements.app.classList.contains('is-empty')
     || (!localPresentationFile && (!getRemotePresentationUrl() && !getPresentationId()));
 };
+const syncPresentationDisplayName = () => {
+  if (!resolvedPresentationName || !getPresentationId()) return;
+  const publicName = `${getPresentationId()}.pptx`;
+  if (elements.documentTitle.textContent === publicName) {
+    elements.documentTitle.textContent = resolvedPresentationName;
+    elements.documentTitle.title = resolvedPresentationName;
+  }
+  if (elements.status.textContent.includes(publicName)) {
+    elements.status.textContent = elements.status.textContent.replace(publicName, resolvedPresentationName);
+  }
+};
 
 downloadButton.addEventListener('click', async () => {
   let objectUrl = null;
@@ -189,6 +201,9 @@ downloadButton.addEventListener('click', async () => {
 
 const downloadObserver = new MutationObserver(syncDownloadButton);
 downloadObserver.observe(elements.app, { attributes: true, attributeFilter: ['class'] });
+const presentationNameObserver = new MutationObserver(syncPresentationDisplayName);
+presentationNameObserver.observe(elements.documentTitle, { childList: true, characterData: true, subtree: true });
+presentationNameObserver.observe(elements.status, { childList: true, characterData: true, subtree: true });
 syncDownloadButton();
 openMappedPresentation().catch((error) => {
   elements.status.textContent = `Could not resolve presentation ID. ${error.message}`;
