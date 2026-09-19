@@ -106,13 +106,15 @@ jobs:
 
       - name: Install and test viewer
         run: |
+          cp .github/viewer-overrides/package.json .github/viewer/package.json
+          cp .github/viewer-overrides/package-lock.json .github/viewer/package-lock.json
           npm ci --prefix .github/viewer
           npm test --prefix .github/viewer
 
       - name: Apply viewer overrides
         run: |
-          cat .github/viewer-overrides.css >> .github/viewer/src/styles.css
-          cat .github/viewer-overrides.js >> .github/viewer/src/main.js
+          cat .github/viewer-overrides/styles-additions.css >> .github/viewer/src/styles.css
+          cat .github/viewer-overrides/main-additions.js >> .github/viewer/src/main.js
 
       - name: Build viewer
         run: npm run build --prefix .github/viewer -- --base=/viewer/
