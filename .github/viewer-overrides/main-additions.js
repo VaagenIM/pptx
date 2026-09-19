@@ -1,17 +1,4 @@
 // Appended JavaScript override for the viewer submodule.
-// Supply the optional PDF.js fallback used by SmartArt EMF previews.
-loadRenderer().then(({ PptxViewer }) => {
-    const open = PptxViewer.open.bind(PptxViewer);
-    const pdfjs = {
-        moduleUrl: new URL('pdfjs-dist/build/pdf.min.mjs', import.meta.url).toString(),
-        workerUrl: new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString(),
-    };
-    PptxViewer.open = (input, container, options = {}) =>
-        open(input, container, {...options, pdfjs});
-}).catch((error) => {
-    console.warn('PDF.js fallback setup unavailable', error);
-});
-
 const viewerParams = new URLSearchParams(window.location.search);
 let localPresentationFile = null;
 
