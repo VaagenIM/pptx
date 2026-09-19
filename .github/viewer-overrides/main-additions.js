@@ -5,55 +5,14 @@ async function normalizeDiagramSvgBlips(input) {
     if (!(input instanceof ArrayBuffer)) return input;
     const zip = await JSZip.loadAsync(input);
     let changed = false;
-    let relationshipCounter = 0;
 
     for (const [name, entry] of Object.entries(zip.files)) {
         if (entry.dir || !/^ppt\/diagrams\/drawing\d+\.xml$/i.test(name)) continue;
         const xml = await entry.async('string');
-        const drawingNumber = name.match(/drawing(\d+)\.xml$/i)?.[1];
-        const drawingRelationshipsName = `ppt/diagrams/_rels/drawing${drawingNumber}.xml.rels`;
-        const drawingRelationships = zip.files[drawingRelationshipsName];
-        if (!drawingRelationships) continue;
-        const relationshipsXml = await drawingRelationships.async('string');
-        const svgRelationships = new Map();
-        for (const match of relationshipsXml.matchAll(
-            /<Relationship\b[^>]*\bId="([^"]+)"[^>]*\bTarget="([^"]+\.svg)"[^>]*\/?>/gi,
-        )) {
-            svgRelationships.set(match[1], match[2]);
-        }
-        if (svgRelationships.size === 0) continue;
-
-        const slideRelationshipEntries = [];
-        for (const [slideRelationshipsName, slideEntry] of Object.entries(zip.files)) {
-            if (slideEntry.dir || !/^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/i.test(slideRelationshipsName)) continue;
-            const slideRelationshipsXml = await slideEntry.async('string');
-            if (new RegExp(`drawing${drawingNumber}\\.xml`, 'i').test(slideRelationshipsXml)) {
-                slideRelationshipEntries.push({name: slideRelationshipsName, xml: slideRelationshipsXml});
-            }
-        }
-
-        const promotedRelationships = new Map();
-        for (const relationshipId of svgRelationships.keys()) {
-            const promotedId = `rIdSmartArtSvg${++relationshipCounter}`;
-            promotedRelationships.set(relationshipId, promotedId);
-            const relationshipTarget = svgRelationships.get(relationshipId);
-            for (const slideRelationship of slideRelationshipEntries) {
-                const relationship = `<Relationship Id="${promotedId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${relationshipTarget}"/>`;
-                slideRelationship.xml = slideRelationship.xml.replace(
-                    '</Relationships>',
-                    `${relationship}</Relationships>`,
-                );
-                zip.file(slideRelationship.name, slideRelationship.xml);
-            }
-        }
         const normalized = xml.replace(
             /<a:blip((?:(?!\br:embed=)[^>])*)>([\s\S]*?<asvg:svgBlip\b[^>]*\br:embed="([^"]+)"[^>]*\/>[\s\S]*?)<\/a:blip>/g,
-            (_match, attributes, contents, relationshipId) => {
-                const promotedId = promotedRelationships.get(relationshipId);
-                return promotedId
-                    ? `<a:blip${attributes} r:embed="${promotedId}">${contents}</a:blip>`
-                    : _match;
-            },
+            (_match, attributes, contents, relationshipId) =>
+                `<a:blip${attributes} r:embed="${relationshipId}">${contents}</a:blip>`,
         );
         if (normalized !== xml) {
             const rootHasRelationshipsNamespace = /^[\s\S]*?<[^>]*\bdrawing\b[^>]*xmlns:r=/.test(normalized);
