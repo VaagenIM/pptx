@@ -1,0 +1,136 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_compress:
+        description: Re-compress every presentation
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install image optimizer
+        run: python -m pip install --quiet Pillow
+
+      - name: Prepare data branch
+        run: |
+          git fetch origin data || true
+          git fetch origin public || true
+          if git show-ref --verify --quiet refs/remotes/origin/data; then
+            git worktree add -B data /tmp/data origin/data
+          else
+            mkdir -p /tmp/data
+            git -C /tmp/data init
+            git -C /tmp/data checkout -b data
+            git -C /tmp/data remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          fi
+          git -C /tmp/data remote set-url origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+
+      - name: Generate map and compressed presentations
+        run: |
+          if [ "${{ inputs.force_compress }}" = "true" ]; then
+            rm -rf /tmp/data/pptx
+            FORCE_ARGS="--force-compress"
+          else
+            FORCE_ARGS=""
+          fi
+          if [ ! -f /tmp/data/uuid_map.json ] && git cat-file -e origin/public:map.json 2>/dev/null; then
+            git show origin/public:map.json > /tmp/data/uuid_map.json
+          fi
+          python .github/tools/generate_map.py \
+            --source powerpoints \
+            --previous-map /tmp/data/uuid_map.json \
+            --output /tmp/data/uuid_map.json
+          python .github/tools/compress_powerpoints.py \
+            --source powerpoints \
+            --destination /tmp/data/pptx \
+            --map /tmp/data/uuid_map.json \
+            $FORCE_ARGS
+
+      - name: Publish data branch
+        run: |
+          git -C /tmp/data config user.name "github-actions[bot]"
+          git -C /tmp/data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/data add uuid_map.json pptx
+          if ! git -C /tmp/data diff --cached --quiet; then
+            git -C /tmp/data commit -m "Update presentation data"
+            git -C /tmp/data push origin data
+          fi
+
+      - name: Generate Pages data
+        run: |
+          rm -rf .github/docs/powerpoints .github/docs/pptx
+          mkdir -p .github/docs/powerpoints .github/docs/pptx
+          cp -R powerpoints/. .github/docs/powerpoints/
+          cp -R /tmp/data/pptx/. .github/docs/pptx/
+          cp /tmp/data/uuid_map.json .github/docs/uuid_map.json
+          python .github/tools/generate_index.py \
+            --source powerpoints \
+            --output .github/docs/index.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: .github/viewer/package-lock.json
+
+      - name: Install and test viewer
+        run: |
+          npm ci --prefix .github/viewer
+          npm test --prefix .github/viewer
+
+      - name: Apply viewer overrides
+        run: |
+          cat .github/viewer-overrides.css >> .github/viewer/src/styles.css
+          cat .github/viewer-overrides.js >> .github/viewer/src/main.js
+
+      - name: Build viewer
+        run: npm run build --prefix .github/viewer -- --base=/viewer/
+
+      - name: Add viewer to Pages artifact
+        run: |
+          rm -rf .github/docs/viewer
+          mkdir -p .github/docs/viewer
+          cp -R .github/viewer/dist/. .github/docs/viewer/
+          echo "pptx.iktim.no" > .github/docs/CNAME
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .github/docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

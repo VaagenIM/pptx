@@ -414,7 +414,7 @@
         </select>
         <button id="refresh" class="primary" type="button">Refresh</button>
     </section>
-    <div id="status" class="status" role="status">Loading repository files…</div>
+    <div id="status" class="status" role="status">Loading presentation index…</div>
     <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
     <section id="files" class="file-list" aria-live="polite"></section>
     <section id="details" class="details" hidden></section>
@@ -435,7 +435,7 @@
             </div>
         </div>
     </dialog>
-    <footer>Files are read from GitHub’s public repository tree. Large files may be subject to GitHub’s download limits.
+    <footer>Files are served from the generated PowerPoint index.
         Viewer powered by <a href="https://github.com/costinEEST/pptx-web" target="_blank" rel="noopener">pptx-web</a>.
     </footer>
 </main>
@@ -444,12 +444,9 @@
         const owner = "VaagenIM";
         const repo = "pptx";
         const sourceBranch = "main";
-        const publicBranch = "public";
-        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${sourceBranch}?recursive=1`;
-        const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${publicBranch}/`;
-        const originalRawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${sourceBranch}/`;
         const githubBase = `https://github.com/${owner}/${repo}/blob/${sourceBranch}/`;
-        const mapUrl = new URL("map.json", window.location.href).href;
+        const indexUrl = new URL("index.json", window.location.href).href;
+        const mapUrl = new URL("uuid_map.json", window.location.href).href;
         const viewerBase = "https://pptx.iktim.no/viewer/";
         const rootPath = "powerpoints";
         const state = {entries: [], ids: {}, idsByPath: {}, path: rootPath, query: "", type: "all"};
@@ -470,9 +467,15 @@
             if (fileType(entry.path) === "pptx") {
                 const id = entry.id || idForPath(entry.path);
                 if (!id) throw new Error(`No presentation ID found for ${entry.path}`);
-                return `${rawBase}powerpoints/${id}.pptx`;
+                return new URL(`pptx/${encodeURIComponent(id)}.pptx`, window.location.href).href;
             }
-            return originalRawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            return new URL(entry.path, window.location.href).href;
+        }
+
+        function downloadUrlFor(entry, original = false) {
+            const id = entry.id || idForPath(entry.path);
+            if (!id) throw new Error(`No presentation ID found for ${entry.path}`);
+            return new URL(`download.html?id=${encodeURIComponent(id)}${original ? "&original=1" : ""}`, window.location.href).href;
         }
 
         function idForPath(path) {
@@ -647,9 +650,9 @@
             const copyDownloadButton = document.createElement("button");
             copyDownloadButton.type = "button";
             copyDownloadButton.textContent = "Copy download URL";
-            copyDownloadButton.onclick = (event) => copy(rawUrl, copyDownloadButton, event, "Copied download URL");
+            copyDownloadButton.onclick = (event) => copy(downloadUrlFor(entry), copyDownloadButton, event, "Copied download URL");
             const originalDownload = document.createElement("a");
-            originalDownload.href = originalRawBase + entry.path.split("/").map(encodeURIComponent).join("/");
+            originalDownload.href = downloadUrlFor(entry, true);
             originalDownload.download = entry.name;
             originalDownload.rel = "noopener";
             originalDownload.textContent = "Download original";
@@ -804,19 +807,18 @@
         }
 
         async function load() {
-            setStatus("Loading repository files…");
+            setStatus("Loading presentation index…");
             try {
-                const [response, mapResponse] = await Promise.all([
-                    fetch(apiUrl, {cache: "no-store", headers: {Accept: "application/vnd.github+json"}}),
+                const [indexResponse, mapResponse] = await Promise.all([
+                    fetch(indexUrl, {cache: "no-store", headers: {Accept: "application/json"}}),
                     fetch(mapUrl, {cache: "no-store", headers: {Accept: "application/json"}})
                 ]);
-                if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+                if (!indexResponse.ok) throw new Error(`Generated index returned ${indexResponse.status}`);
                 if (!mapResponse.ok) throw new Error(`Presentation map returned ${mapResponse.status}`);
-                const data = await response.json();
+                const data = await indexResponse.json();
                 state.ids = await mapResponse.json();
                 state.idsByPath = Object.fromEntries(Object.entries(state.ids).map(([id, path]) => [normalizeRepoPath(path), id]));
-                if (data.truncated) setStatus("The GitHub tree is too large to list completely.", true);
-                state.entries = (data.tree || [])
+                state.entries = (Array.isArray(data) ? data : [])
                     .filter((entry) => (entry.type === "blob" || entry.type === "tree") && isPublicEntry(entry))
                     .map((entry) => ({...entry, id: idForPath(entry.path)}));
                 state.path = rootPath;

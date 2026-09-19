@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Download · Vågen PowerPoints</title>
+    <style>
+        body { color: #1f2328; font: 16px/1.5 system-ui, sans-serif; margin: 3rem auto; max-width: 38rem; padding: 0 1rem; }
+        @media (prefers-color-scheme: dark) { body { background: #0d1117; color: #e6edf3; } }
+    </style>
+</head>
+<body>
+    <p id="status">Preparing download…</p>
+    <script>
+        (() => {
+            const params = new URLSearchParams(location.search);
+            const id = params.get("id");
+            const original = params.get("original") === "1";
+            const status = document.getElementById("status");
+
+            const fail = (message) => {
+                status.textContent = message;
+            };
+
+            if (!id) {
+                fail("A presentation ID is required.");
+                return;
+            }
+
+            fetch(new URL("uuid_map.json", location.href), { cache: "no-store" })
+                .then((response) => {
+                    if (!response.ok) throw new Error(`Map returned HTTP ${response.status}.`);
+                    return response.json();
+                })
+                .then((map) => {
+                    const path = map[id];
+                    if (typeof path !== "string" || !path.startsWith("powerpoints/") || !path.endsWith(".pptx")) {
+                        throw new Error("The presentation ID was not found.");
+                    }
+                    const filename = path.split("/").pop();
+                    const fileUrl = new URL(original ? path : `pptx/${id}.pptx`, location.href);
+                    return fetch(fileUrl).then((response) => {
+                        if (!response.ok) throw new Error(`Download returned HTTP ${response.status}.`);
+                        return response.blob();
+                    }).then((blob) => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    const objectUrl = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = objectUrl;
+                    link.download = filename;
+                    document.body.append(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(objectUrl);
+                    status.textContent = `Downloading ${filename}…`;
+                })
+                .catch((error) => fail(`Could not download the presentation: ${error.message}`));
+        })();
+    </script>
+</body>
+</html>

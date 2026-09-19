@@ -1,4 +1,4 @@
-"""Generate the stable PowerPoint UUID-to-path map for the public branch."""
+"""Generate the stable PowerPoint UUID-to-path map for the data branch."""
 
 from __future__ import annotations
 

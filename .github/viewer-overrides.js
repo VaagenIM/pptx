@@ -70,8 +70,8 @@ elements.fileInput.addEventListener('change', (event) => {
   localPresentationFile = event.target.files?.[0] ?? null;
 }, true);
 
-const presentationMapUrl = new URL('/map.json', window.location.href).href;
-const publicPresentationsUrl = 'https://raw.githubusercontent.com/VaagenIM/pptx/public/';
+const presentationMapUrl = new URL('/uuid_map.json', window.location.href).href;
+const publicPresentationsUrl = new URL('/pptx/', window.location.origin).href;
 let resolvedPresentationUrl = null;
 let resolvedPresentationName = null;
 let presentationResolution = null;
@@ -109,7 +109,7 @@ const resolvePresentationForDownload = async () => {
       if (typeof path !== 'string' || !path.startsWith('powerpoints/') || !path.endsWith('.pptx')) {
         throw new Error('The presentation ID was not found.');
       }
-      const url = new URL(`powerpoints/${getPresentationId()}.pptx`, publicPresentationsUrl).href;
+      const url = new URL(`${getPresentationId()}.pptx`, publicPresentationsUrl).href;
       return { url, name: path.split('/').pop() || 'presentation.pptx' };
     });
   const result = await presentationResolution;
