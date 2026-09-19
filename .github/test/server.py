@@ -30,7 +30,17 @@ if __name__ == "__main__":
     styles.write_text(f"{styles_source}\n{marker}\n{css_override}", encoding="utf-8")
     main.write_text(f"{main_source}\n{marker}\n{js_override}", encoding="utf-8")
     viewer = subprocess.Popen(
-        [npm, "run", "dev", "--", "--host", "localhost"],
+        [
+            npm,
+            "run",
+            "dev",
+            "--",
+            "--host",
+            "localhost",
+            "--port",
+            "5173",
+            "--strictPort",
+        ],
         cwd=viewer_root,
     )
     server = ThreadingHTTPServer(("localhost", 8000), CorsHandler)

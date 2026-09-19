@@ -1,3 +1,5 @@
+import JSZip from 'jszip';
+
 // Appended JavaScript override for the viewer submodule.
 const viewerParams = new URLSearchParams(window.location.search);
 let localPresentationFile = null;
@@ -284,6 +286,115 @@ const viewerObserver = new MutationObserver(() => {
     bindViewerEvents();
     syncFullscreenSlide();
 });
+
+    const normalizeZipPath = (path) => {
+        const parts = path.split('/');
+        const normalized = [];
+        for (const part of parts) {
+            if (!part || part === '.') continue;
+            if (part === '..') normalized.pop();
+            else normalized.push(part);
+        }
+        return normalized.join('/');
+    };
+
+    const readRelationshipTargets = (xml) => {
+        const document = new DOMParser().parseFromString(xml, 'application/xml');
+        const relationships = new Map();
+        for (const relationship of document.getElementsByTagNameNS('*', 'Relationship')) {
+            relationships.set(
+                relationship.getAttribute('Id'),
+                relationship.getAttribute('Target'),
+            );
+        }
+        return relationships;
+    };
+
+    const readSmartArtIconSources = async () => {
+        const source = localPresentationFile
+            || new URLSearchParams(window.location.search).get('url')
+            || resolvedPresentationUrl;
+        if (!source) return [];
+        const response = localPresentationFile
+            ? {ok: true, arrayBuffer: () => localPresentationFile.arrayBuffer()}
+            : await fetch(source, {credentials: 'omit'});
+        if (!response.ok) throw new Error(`SmartArt source returned HTTP ${response.status}.`);
+
+        const zip = await JSZip.loadAsync(await response.arrayBuffer());
+        const iconPaths = [];
+        const drawingPaths = Object.keys(zip.files)
+            .filter((path) => /^ppt\/diagrams\/drawing\d+\.xml$/i.test(path))
+            .sort();
+        for (const drawingPath of drawingPaths) {
+            const drawingXml = await zip.file(drawingPath).async('string');
+            const drawingDocument = new DOMParser().parseFromString(drawingXml, 'application/xml');
+            const relationshipsPath = `ppt/diagrams/_rels/${drawingPath.split('/').pop()}.rels`;
+            const relationshipsFile = zip.file(relationshipsPath);
+            if (!relationshipsFile) continue;
+            const relationships = readRelationshipTargets(
+                await relationshipsFile.async('string'),
+            );
+            for (const shape of drawingDocument.getElementsByTagNameNS('*', 'sp')) {
+                const blip = shape.getElementsByTagNameNS('*', 'blip')[0];
+                const imageBlip = blip?.getElementsByTagNameNS('*', 'svgBlip')[0] || blip;
+                const relationshipId = imageBlip?.getAttributeNS(
+                    'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+                    'embed',
+                ) || imageBlip?.getAttribute('r:embed');
+                const target = relationshipId && relationships.get(relationshipId);
+                if (!target) continue;
+                iconPaths.push(normalizeZipPath(`ppt/diagrams/${target}`));
+            }
+        }
+
+        return Promise.all(iconPaths.map(async (path) => {
+            const file = zip.file(path);
+            if (!file) return null;
+            const data = await file.async('uint8array');
+            return URL.createObjectURL(new Blob([data], {type: 'image/svg+xml'}));
+        })).then((sources) => sources.filter(Boolean));
+    };
+
+    let smartArtIconSourcesPromise;
+    const patchSmartArtIcons = async () => {
+        const renderRoots = [elements.viewerContainer, elements.thumbnailList];
+        const slots = renderRoots.flatMap((root) => [...root.querySelectorAll('svg')]).filter((svg) => {
+            const path = svg.children.length === 1 ? svg.firstElementChild : null;
+            const wrapper = svg.parentElement;
+            if (!path || path.localName !== 'path' || path.getAttribute('fill') !== '#000000'
+                || !path.getAttribute('d')?.startsWith('M0,0 L') || !wrapper
+                || wrapper.dataset.pptxSmartartIcon === 'true') return false;
+            const width = Number.parseFloat(wrapper.style.width);
+            const height = Number.parseFloat(wrapper.style.height);
+            return Number.isFinite(width) && Number.isFinite(height)
+                && width > 20 && Math.abs(width - height) < 0.1;
+        });
+        if (slots.length === 0) return;
+        smartArtIconSourcesPromise ??= readSmartArtIconSources();
+        const sources = await smartArtIconSourcesPromise;
+        slots.slice(0, sources.length).forEach((svg, index) => {
+            const wrapper = svg.parentElement;
+            const image = document.createElement('img');
+            image.src = sources[index];
+            image.alt = '';
+            image.draggable = false;
+            image.style.width = '100%';
+            image.style.height = '100%';
+            image.style.display = 'block';
+            wrapper.dataset.pptxSmartartIcon = 'true';
+            wrapper.replaceChildren(image);
+        });
+    };
+
+    const smartArtObserver = new MutationObserver(() => {
+        patchSmartArtIcons().catch((error) => {
+            console.error('Could not restore SmartArt icons.', error);
+        });
+    });
+    smartArtObserver.observe(elements.viewerContainer, {childList: true, subtree: true});
+    patchSmartArtIcons().catch((error) => {
+        console.error('Could not restore SmartArt icons.', error);
+    });
 viewerObserver.observe(elements.viewerContainer, {
     childList: true,
     subtree: true,
