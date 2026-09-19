@@ -16,4 +16,7 @@ See [CUSTOMIZATION.md](CUSTOMIZATION.md) for embedding and customization instruc
 ## Credits
 
 The browser viewer is powered by
-[costinEEST/pptx-web](https://github.com/costinEEST/pptx-web), under its MIT license.
+[pptx-web](https://github.com/costinEEST/pptx-web) and
+[`pptx-renderer`](https://github.com/aiden0z/pptx-renderer).
+`pptx-web` is available under the MIT license, and `pptx-renderer` under the
+Apache-2.0 license.
