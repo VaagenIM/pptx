@@ -19,11 +19,12 @@ if __name__ == "__main__":
     if not npm:
         raise SystemExit("npm is required to start the viewer server.")
     viewer_root = root / ".github" / "viewer"
+    overrides_root = root / ".github" / "viewer-overrides"
     marker = "/* pptx repository local overrides */"
     styles = viewer_root / "src" / "styles.css"
     main = viewer_root / "src" / "main.js"
-    css_override = (root / ".github" / "viewer-overrides.css").read_text(encoding="utf-8")
-    js_override = (root / ".github" / "viewer-overrides.js").read_text(encoding="utf-8")
+    css_override = (overrides_root / "styles-additions.css").read_text(encoding="utf-8")
+    js_override = (overrides_root / "main-additions.js").read_text(encoding="utf-8")
     styles_source = styles.read_text(encoding="utf-8").split(marker, 1)[0].rstrip()
     main_source = main.read_text(encoding="utf-8").split(marker, 1)[0].rstrip()
     styles.write_text(f"{styles_source}\n{marker}\n{css_override}", encoding="utf-8")
