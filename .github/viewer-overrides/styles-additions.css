@@ -162,3 +162,15 @@
 .stage:fullscreen .viewer-container > [data-slide-index].pptx-fullscreen-slide > div > * {
     transform-origin: center center !important;
 }
+
+.thumbnail-preview > div {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.thumbnail-preview > div > div {
+    width: 1920px !important;
+    height: 1080px !important;
+    transform: scale(0.12) !important;
+    overflow: visible !important;
+}
