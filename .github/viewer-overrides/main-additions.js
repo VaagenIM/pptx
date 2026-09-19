@@ -1,35 +1,15 @@
 // Appended JavaScript override for the viewer submodule.
-import JSZip from 'jszip';
-
-async function normalizeDiagramSvgBlips(input) {
-    if (!(input instanceof ArrayBuffer)) return input;
-    const zip = await JSZip.loadAsync(input);
-    let changed = false;
-
-    for (const [name, entry] of Object.entries(zip.files)) {
-        if (entry.dir || !/^ppt\/diagrams\/drawing\d+\.xml$/i.test(name)) continue;
-        const xml = await entry.async('string');
-        const normalized = xml.replace(
-            /<a:blip((?:(?!\br:embed=)[^>])*)>([\s\S]*?<asvg:svgBlip\b[^>]*\br:embed="([^"]+)"[^>]*\/>[\s\S]*?)<\/a:blip>/g,
-            (_match, attributes, contents, relationshipId) =>
-                `<a:blip${attributes} r:embed="${relationshipId}">${contents}</a:blip>`,
-        );
-        if (normalized !== xml) {
-            zip.file(name, normalized);
-            changed = true;
-        }
-    }
-
-    return changed ? zip.generateAsync({type: 'arraybuffer'}) : input;
-}
-
-// Normalize SmartArt SVG relationships before the renderer parses the deck.
+// Supply the optional PDF.js fallback used by SmartArt EMF previews.
 loadRenderer().then(({ PptxViewer }) => {
     const open = PptxViewer.open.bind(PptxViewer);
-    PptxViewer.open = async (input, container, options = {}) =>
-        open(await normalizeDiagramSvgBlips(input), container, options);
+    const pdfjs = {
+        moduleUrl: new URL('pdfjs-dist/build/pdf.min.mjs', import.meta.url).toString(),
+        workerUrl: new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString(),
+    };
+    PptxViewer.open = (input, container, options = {}) =>
+        open(input, container, {...options, pdfjs});
 }).catch((error) => {
-    console.warn('SmartArt SVG normalization unavailable', error);
+    console.warn('PDF.js fallback setup unavailable', error);
 });
 
 const viewerParams = new URLSearchParams(window.location.search);
