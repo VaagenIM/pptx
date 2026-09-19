@@ -15,14 +15,7 @@ async function normalizeDiagramSvgBlips(input) {
                 `<a:blip${attributes} r:embed="${relationshipId}">${contents}</a:blip>`,
         );
         if (normalized !== xml) {
-            const rootHasRelationshipsNamespace = /^[\s\S]*?<[^>]*\bdrawing\b[^>]*xmlns:r=/.test(normalized);
-            const withRelationshipsNamespace = rootHasRelationshipsNamespace
-                ? normalized
-                : normalized.replace(
-                    /(<(?:[A-Za-z_][\w.-]*:)?drawing\b)/,
-                    '$1 xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"',
-                );
-            zip.file(name, withRelationshipsNamespace);
+            zip.file(name, normalized);
             changed = true;
         }
     }
