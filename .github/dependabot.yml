@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /.github/viewer-overrides
+    schedule:
+      interval: monthly
+    groups:
+      viewer-overrides:
+        patterns:
+          - "*"
